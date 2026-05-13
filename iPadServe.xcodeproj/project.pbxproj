@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		00655769839F5784B3884BDC /* FileScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E916A31E3576EEFF876E75 /* FileScanner.swift */; };
 		096C0408F985B6F51ABE1B5F /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1EBE2081E3CD55BA3E562 /* ProjectDetailView.swift */; };
+		31860E6047E014BE5165051E /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 74C180DDB03E9FF0055F4DEB /* index.html */; };
+		4FC615CCC6C1565E23A3B9E7 /* app.js in Resources */ = {isa = PBXBuildFile; fileRef = F2E97171319928192228B0E5 /* app.js */; };
 		69BD26AD54B7F2CE936F3DF2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD34D1FFD46B276982828FB /* ContentView.swift */; };
 		6CD991B748BCF884352F06B2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E274F1544FB187C52361CD0E /* Assets.xcassets */; };
 		6F4C044300F77AC65E416768 /* ProjectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7EA6B76040E95431A5F67 /* ProjectItem.swift */; };
@@ -17,6 +19,7 @@
 		A2C368F7AC29AA5479756F1D /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7B25F8CF8342F52D44560B /* BrowserView.swift */; };
 		AFF9C1450F0CC482E2509114 /* LocalHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCE1D5AC59587DEF80E3AC4 /* LocalHTTPServer.swift */; };
 		BFF97B4B6086FBB4915BE4ED /* MimeTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47853D42540B1D2B5E525451 /* MimeTypes.swift */; };
+		ED210B8928FD9E108145570E /* styles.css in Resources */ = {isa = PBXBuildFile; fileRef = 8A6BAADAEFA2CA55FEF65823 /* styles.css */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,12 +29,15 @@
 		3177DDB36A1B8E896725D41C /* ProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStore.swift; sourceTree = "<group>"; };
 		47853D42540B1D2B5E525451 /* MimeTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MimeTypes.swift; sourceTree = "<group>"; };
 		57B1EBE2081E3CD55BA3E562 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
+		74C180DDB03E9FF0055F4DEB /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
+		8A6BAADAEFA2CA55FEF65823 /* styles.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = styles.css; sourceTree = "<group>"; };
 		8A7B25F8CF8342F52D44560B /* BrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserView.swift; sourceTree = "<group>"; };
 		8DCE1D5AC59587DEF80E3AC4 /* LocalHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalHTTPServer.swift; sourceTree = "<group>"; };
 		AFC14146FA3C6AFF2BA44B5A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		CAD6E51FB0E5E37242168B5B /* iPadServeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPadServeApp.swift; sourceTree = "<group>"; };
 		E274F1544FB187C52361CD0E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E9D7EA6B76040E95431A5F67 /* ProjectItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectItem.swift; sourceTree = "<group>"; };
+		F2E97171319928192228B0E5 /* app.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = app.js; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -43,11 +49,22 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		4436AFAC1EBD0C7FD2B20602 /* iPad Serve Guide */ = {
+			isa = PBXGroup;
+			children = (
+				F2E97171319928192228B0E5 /* app.js */,
+				74C180DDB03E9FF0055F4DEB /* index.html */,
+				8A6BAADAEFA2CA55FEF65823 /* styles.css */,
+			);
+			path = "iPad Serve Guide";
+			sourceTree = "<group>";
+		};
 		64A9E76565D00B44254DB57A /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 				E274F1544FB187C52361CD0E /* Assets.xcassets */,
 				AFC14146FA3C6AFF2BA44B5A /* Info.plist */,
+				4436AFAC1EBD0C7FD2B20602 /* iPad Serve Guide */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -146,6 +163,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				6CD991B748BCF884352F06B2 /* Assets.xcassets in Resources */,
+				4FC615CCC6C1565E23A3B9E7 /* app.js in Resources */,
+				31860E6047E014BE5165051E /* index.html in Resources */,
+				ED210B8928FD9E108145570E /* styles.css in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

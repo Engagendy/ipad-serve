@@ -65,6 +65,13 @@ struct ContentView: View {
             ServerStatusView(isRunning: server.isRunning, port: server.port)
                 .padding()
         }
+        .onChange(of: store.projects) { _, projects in
+            if let selectedID = selectedProject?.id,
+               projects.contains(where: { $0.id == selectedID }) {
+                return
+            }
+            selectedProject = projects.first
+        }
     }
 }
 

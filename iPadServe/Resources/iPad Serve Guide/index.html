@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>iPad Serve Guide</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav">
+      <span class="mark">iPad Serve</span>
+      <a href="#steps">Steps</a>
+      <a href="#checks">Checks</a>
+      <button class="icon-button" id="openIntro" aria-label="Open intro modal">?</button>
+    </nav>
+
+    <section class="hero-copy">
+      <p class="eyebrow">Runs fully on iPad</p>
+      <h1>Open complete HTML projects without a Mac server.</h1>
+      <p class="lead">Import a folder, choose a page, and iPad Serve hosts the project locally so CSS, JavaScript, images, video, and links resolve correctly.</p>
+      <a class="primary-action" href="#steps">See the workflow</a>
+    </section>
+  </header>
+
+  <main>
+    <section class="intro" aria-label="What this sample proves">
+      <div>
+        <span class="label">This bundled project</span>
+        <h2>It is a normal static website.</h2>
+      </div>
+      <p>This page ships inside the app on first launch. It uses separate HTML, CSS, and JavaScript files, plus a modal interaction, so you can confirm the local server is doing real project serving.</p>
+    </section>
+
+    <section class="steps" id="steps">
+      <div class="section-heading">
+        <span class="label">Screenshots</span>
+        <h2>Three steps to run your own folder.</h2>
+      </div>
+
+      <article class="shot reveal">
+        <div class="screen">
+          <div class="topbar"></div>
+          <div class="split">
+            <div class="sidebar">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="canvas">
+              <strong>Projects</strong>
+              <p>Tap the folder button and choose a complete project folder from Files.</p>
+            </div>
+          </div>
+        </div>
+        <div class="shot-copy">
+          <span>01</span>
+          <h3>Import a folder</h3>
+          <p>Copy your website to iPad using Files, iCloud Drive, AirDrop, or USB-C storage, then import the whole folder.</p>
+        </div>
+      </article>
+
+      <article class="shot reveal">
+        <div class="screen dark">
+          <div class="topbar"></div>
+          <div class="file-list">
+            <b>index.html</b>
+            <b>pages/about.html</b>
+            <b>assets/site.css</b>
+            <b>video/intro.mov</b>
+          </div>
+        </div>
+        <div class="shot-copy">
+          <span>02</span>
+          <h3>Pick any page</h3>
+          <p>The file browser keeps folders and assets visible. HTML pages open in the built-in web view.</p>
+        </div>
+      </article>
+
+      <article class="shot reveal">
+        <div class="screen browser">
+          <div class="mini-toolbar">
+            <i></i><i></i><i></i><i></i>
+          </div>
+          <div class="website-preview">
+            <h4>Your site</h4>
+            <p>CSS, JavaScript, modals, videos, and relative paths work through localhost.</p>
+            <button id="previewModal">Try JS modal</button>
+          </div>
+        </div>
+        <div class="shot-copy">
+          <span>03</span>
+          <h3>Run locally</h3>
+          <p>iPad Serve starts a private server on the iPad and serves the selected files to WebKit.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="checks" id="checks">
+      <div class="section-heading">
+        <span class="label">Good fit</span>
+        <h2>Projects that work best.</h2>
+      </div>
+      <ul>
+        <li><strong>Static HTML</strong><span>Plain `.html`, `.css`, `.js`, images, fonts, PDFs, and media files.</span></li>
+        <li><strong>Relative paths</strong><span>Links like `assets/app.js` and `../images/photo.jpg` stay inside the folder.</span></li>
+        <li><strong>Client-side JS</strong><span>Buttons, tabs, charts, modals, and browser-only app logic run normally.</span></li>
+      </ul>
+    </section>
+  </main>
+
+  <dialog id="introDialog">
+    <form method="dialog">
+      <button class="close" aria-label="Close">x</button>
+      <span class="label">JavaScript is active</span>
+      <h2>This modal opened from app.js.</h2>
+      <p>If you can see this, the bundled sample is being served like a real local project with external JavaScript.</p>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

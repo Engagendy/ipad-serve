@@ -7,6 +7,9 @@ final class ProjectStore: ObservableObject {
     @Published var importError: String?
 
     private let fileManager = FileManager.default
+    private let bundledSampleName = "iPad Serve Guide"
+    private let bundledSampleInstallKey = "didInstallBundledSampleProject.v1"
+    private let bundledSampleFiles = ["index.html", "styles.css", "app.js"]
 
     var projectsDirectory: URL {
         let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -15,6 +18,8 @@ final class ProjectStore: ObservableObject {
 
     func loadProjects() {
         try? fileManager.createDirectory(at: projectsDirectory, withIntermediateDirectories: true)
+        installBundledSampleIfNeeded()
+
         let folders = (try? fileManager.contentsOfDirectory(
             at: projectsDirectory,
             includingPropertiesForKeys: [.isDirectoryKey],
@@ -51,6 +56,30 @@ final class ProjectStore: ObservableObject {
         do {
             try fileManager.removeItem(at: project.rootURL)
             loadProjects()
+        } catch {
+            importError = error.localizedDescription
+        }
+    }
+
+    private func installBundledSampleIfNeeded() {
+        let destination = projectsDirectory.appendingPathComponent(bundledSampleName, isDirectory: true)
+        guard !UserDefaults.standard.bool(forKey: bundledSampleInstallKey) else { return }
+        guard !fileManager.fileExists(atPath: destination.path) else {
+            UserDefaults.standard.set(true, forKey: bundledSampleInstallKey)
+            return
+        }
+
+        do {
+            try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
+            for file in bundledSampleFiles {
+                let sourceURL = Bundle.main.url(
+                    forResource: (file as NSString).deletingPathExtension,
+                    withExtension: (file as NSString).pathExtension
+                )
+                guard let sourceURL else { continue }
+                try fileManager.copyItem(at: sourceURL, to: destination.appendingPathComponent(file))
+            }
+            UserDefaults.standard.set(true, forKey: bundledSampleInstallKey)
         } catch {
             importError = error.localizedDescription
         }

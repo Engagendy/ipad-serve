@@ -8,14 +8,14 @@ final class ProjectStore: ObservableObject {
 
     private let fileManager = FileManager.default
     private let bundledSampleName = "iPad Serve Guide"
-    private let bundledSampleInstallKey = "didInstallBundledSampleProject.v1"
+    private let bundledSampleInstallKey = "didInstallBundledSampleProject.v2"
     private let bundledSampleFiles = [
         "index.html",
         "styles.css",
         "app.js",
-        "screenshots/01-import-folder.svg",
-        "screenshots/02-file-browser.svg",
-        "screenshots/03-running-site.svg"
+        "screenshots/01-projects.png",
+        "screenshots/02-file-browser.png",
+        "screenshots/03-running-guide.png"
     ]
 
     var projectsDirectory: URL {
@@ -71,12 +71,11 @@ final class ProjectStore: ObservableObject {
     private func installBundledSampleIfNeeded() {
         let destination = projectsDirectory.appendingPathComponent(bundledSampleName, isDirectory: true)
         guard !UserDefaults.standard.bool(forKey: bundledSampleInstallKey) else { return }
-        guard !fileManager.fileExists(atPath: destination.path) else {
-            UserDefaults.standard.set(true, forKey: bundledSampleInstallKey)
-            return
-        }
 
         do {
+            if fileManager.fileExists(atPath: destination.path) {
+                try fileManager.removeItem(at: destination)
+            }
             try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
             for file in bundledSampleFiles {
                 let fileName = (file as NSString).lastPathComponent

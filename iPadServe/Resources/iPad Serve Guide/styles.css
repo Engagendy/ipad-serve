@@ -214,7 +214,9 @@ h2 {
 .screen img {
   display: block;
   width: 100%;
-  height: auto;
+  height: min(70vh, 620px);
+  object-fit: contain;
+  background: #eef4f5;
 }
 
 .screen:hover {
@@ -353,5 +355,9 @@ dialog form {
 
   .shot:nth-of-type(odd) .screen {
     order: 0;
+  }
+
+  .screen img {
+    height: auto;
   }
 }

@@ -45,3 +45,17 @@ targets:
           NSAllowsArbitraryLoads: true
           NSAllowsArbitraryLoadsInWebContent: true
           NSAllowsLocalNetworking: true
+  iPadServeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: iPadServeUITests
+    dependencies:
+      - target: iPadServe
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.engagendy.iPadServeUITests
+        PRODUCT_NAME: iPad Serve UI Tests
+        TEST_TARGET_NAME: iPadServe
+        DEVELOPMENT_TEAM: 7JM77223V5
+        GENERATE_INFOPLIST_FILE: true

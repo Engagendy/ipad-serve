@@ -8,7 +8,7 @@ final class ProjectStore: ObservableObject {
 
     private let fileManager = FileManager.default
     private let bundledSampleName = "iPad Serve Guide"
-    private let bundledSampleInstallKey = "didInstallBundledSampleProject.v2"
+    private let bundledSampleInstallKey = "didInstallBundledSampleProject.v3"
     private let bundledSampleFiles = [
         "index.html",
         "styles.css",

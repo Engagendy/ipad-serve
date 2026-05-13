@@ -7,93 +7,121 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="hero">
-    <nav class="nav">
-      <span class="mark">iPad Serve</span>
+  <nav class="topbar">
+    <a class="brand" href="#">iPad Serve</a>
+    <div class="nav-links">
       <a href="#steps">Steps</a>
       <a href="#checks">Checks</a>
-      <button class="icon-button" id="openIntro" aria-label="Open intro modal">?</button>
-    </nav>
-
-    <section class="hero-copy">
-      <p class="eyebrow">Runs fully on iPad</p>
-      <h1>Open complete HTML projects without a Mac server.</h1>
-      <p class="lead">Import a folder, choose a page, and iPad Serve hosts the project locally so CSS, JavaScript, images, video, and links resolve correctly.</p>
-      <a class="primary-action" href="#steps">See the workflow</a>
-    </section>
-
-    <figure class="hero-screenshot" aria-label="iPad Serve running the bundled guide">
-      <img src="screenshots/03-running-guide.png" alt="Real iPad Serve screenshot running the bundled guide in the embedded browser">
-    </figure>
-  </header>
+      <button class="help-button" id="openIntro" aria-label="Open intro modal">?</button>
+    </div>
+  </nav>
 
   <main>
-    <section class="intro" aria-label="What this sample proves">
+    <header class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-inner">
+        <section class="hero-copy">
+          <span class="pill">Runs fully on iPad</span>
+          <h1>Open complete HTML projects without a Mac server.</h1>
+          <p>Import a folder, choose a page, and iPad Serve hosts the project locally so CSS, JavaScript, images, video, and links resolve correctly.</p>
+          <div class="hero-actions">
+            <a class="primary-action" href="#steps">See the workflow</a>
+            <span class="server-status"><i></i>Local server running on 127.0.0.1:51324</span>
+          </div>
+        </section>
+
+        <figure class="device-frame hero-device">
+          <img src="screenshots/03-running-guide.png" alt="iPad Serve running the bundled guide in the embedded browser">
+        </figure>
+      </div>
+    </header>
+
+    <section class="intro reveal" aria-label="What this sample proves">
       <div>
-        <span class="label">This bundled project</span>
+        <span class="section-kicker">This bundled project</span>
         <h2>It is a normal static website.</h2>
       </div>
       <p>This page ships inside the app on first launch. It uses separate HTML, CSS, and JavaScript files, plus a modal interaction, so you can confirm the local server is doing real project serving.</p>
     </section>
 
-    <section class="steps" id="steps">
-      <div class="section-heading">
-        <span class="label">Screenshots</span>
+    <section class="workflow" id="steps">
+      <div class="section-heading reveal">
+        <span class="section-kicker">The process</span>
         <h2>Three steps to run your own folder.</h2>
       </div>
 
-      <article class="shot reveal">
-        <figure class="screen rotated-screen">
-          <img src="screenshots/01-projects.png" alt="Real iPad Serve screenshot showing the bundled guide project in the project list">
+      <article class="step reveal">
+        <figure class="device-frame">
+          <img src="screenshots/01-projects.png" alt="iPad Serve project browser showing the bundled guide project and its files">
         </figure>
-        <div class="shot-copy">
+        <div class="step-copy">
           <span>01</span>
           <h3>Import a folder</h3>
           <p>Copy your website to iPad using Files, iCloud Drive, AirDrop, or USB-C storage, then import the whole folder.</p>
         </div>
       </article>
 
-      <article class="shot reveal">
-        <figure class="screen rotated-screen">
-          <img src="screenshots/02-file-browser.png" alt="Real iPad Serve screenshot showing the guide project file browser">
+      <article class="step step-reverse reveal">
+        <figure class="device-frame">
+          <img src="screenshots/02-file-browser.png" alt="iPad Serve file browser showing folders, HTML, CSS, and JavaScript files">
         </figure>
-        <div class="shot-copy">
+        <div class="step-copy">
           <span>02</span>
           <h3>Pick any page</h3>
-          <p>The file browser keeps folders and assets visible. HTML pages open in the built-in web view.</p>
+          <p>The file browser keeps folders and assets visible. HTML pages open in the built-in web view with local paths intact.</p>
         </div>
       </article>
 
-      <article class="shot reveal">
-        <figure class="screen rotated-screen">
-          <img src="screenshots/03-running-guide.png" alt="Real iPad Serve screenshot showing the guide page running in the embedded browser">
+      <article class="step reveal">
+        <figure class="device-frame">
+          <img src="screenshots/03-running-guide.png" alt="The bundled guide running inside iPad Serve with the local server active">
         </figure>
-        <div class="shot-copy">
+        <div class="step-copy">
           <span>03</span>
           <h3>Run locally</h3>
-          <p>iPad Serve starts a private server on the iPad and serves the selected files to WebKit.</p>
-          <button class="inline-action" id="previewModal">Try JS modal</button>
+          <p>iPad Serve starts a private server on the iPad and serves the selected files to WebKit for authentic browsing.</p>
+          <button class="secondary-action" id="previewModal">Try JS modal</button>
         </div>
       </article>
     </section>
 
     <section class="checks" id="checks">
-      <div class="section-heading">
-        <span class="label">Good fit</span>
+      <div class="section-heading reveal">
+        <span class="section-kicker">Good fit</span>
         <h2>Projects that work best.</h2>
       </div>
-      <ul>
-        <li><strong>Static HTML</strong><span>Plain `.html`, `.css`, `.js`, images, fonts, PDFs, and media files.</span></li>
-        <li><strong>Relative paths</strong><span>Links like `assets/app.js` and `../images/photo.jpg` stay inside the folder.</span></li>
-        <li><strong>Client-side JS</strong><span>Buttons, tabs, charts, modals, and browser-only app logic run normally.</span></li>
-      </ul>
+      <div class="check-grid">
+        <article class="check-card reveal">
+          <div class="check-icon">HTML</div>
+          <h3>Static HTML</h3>
+          <p>Plain .html, .css, .js, images, fonts, PDFs, and media files work exactly as they would on a production server.</p>
+        </article>
+        <article class="check-card reveal">
+          <div class="check-icon">DIR</div>
+          <h3>Relative paths</h3>
+          <p>Links like assets/app.js and ../images/photo.jpg stay inside the folder and resolve correctly in local preview.</p>
+        </article>
+        <article class="check-card reveal">
+          <div class="check-icon">JS</div>
+          <h3>Client-side JS</h3>
+          <p>Buttons, tabs, charts, modals, and browser-only app logic run normally with zero network dependency.</p>
+        </article>
+      </div>
     </section>
   </main>
+
+  <footer class="footer">
+    <div>
+      <strong>iPad Serve</strong>
+      <p>Built for local technical workflows on iPad.</p>
+    </div>
+    <a href="#steps">Workflow</a>
+  </footer>
 
   <dialog id="introDialog">
     <form method="dialog">
       <button class="close" aria-label="Close">x</button>
-      <span class="label">JavaScript is active</span>
+      <span class="section-kicker">JavaScript is active</span>
       <h2>This modal opened from app.js.</h2>
       <p>If you can see this, the bundled sample is being served like a real local project with external JavaScript.</p>
     </form>

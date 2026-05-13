@@ -93,7 +93,7 @@ a {
   z-index: 1;
   justify-self: end;
   width: min(46vw, 520px);
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 1668 / 2420;
   margin: 0 0 16px;
   display: grid;
   place-items: center;
@@ -108,7 +108,7 @@ a {
 
 .hero-screenshot img {
   display: block;
-  width: 180%;
+  width: 145.1%;
   max-width: none;
   height: auto;
   transform: rotate(90deg);
@@ -235,13 +235,13 @@ h2 {
 }
 
 .rotated-screen {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 1668 / 2420;
   display: grid;
   place-items: center;
 }
 
 .rotated-screen img {
-  width: 185%;
+  width: 145.1%;
   max-width: none;
   height: auto;
   transform: rotate(90deg);
@@ -403,6 +403,6 @@ dialog form {
   }
 
   .rotated-screen img {
-    width: 182%;
+    width: 145.1%;
   }
 }

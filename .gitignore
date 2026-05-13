@@ -1,0 +1,8 @@
+.DS_Store
+xcuserdata/
+DerivedData/
+build/
+*.xcresult
+*.ipa
+*.dSYM.zip
+iPadServe.xcodeproj/project.xcworkspace/xcuserdata/

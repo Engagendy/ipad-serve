@@ -9,7 +9,14 @@ final class ProjectStore: ObservableObject {
     private let fileManager = FileManager.default
     private let bundledSampleName = "iPad Serve Guide"
     private let bundledSampleInstallKey = "didInstallBundledSampleProject.v1"
-    private let bundledSampleFiles = ["index.html", "styles.css", "app.js"]
+    private let bundledSampleFiles = [
+        "index.html",
+        "styles.css",
+        "app.js",
+        "screenshots/01-import-folder.svg",
+        "screenshots/02-file-browser.svg",
+        "screenshots/03-running-site.svg"
+    ]
 
     var projectsDirectory: URL {
         let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -72,12 +79,15 @@ final class ProjectStore: ObservableObject {
         do {
             try fileManager.createDirectory(at: destination, withIntermediateDirectories: true)
             for file in bundledSampleFiles {
+                let fileName = (file as NSString).lastPathComponent
                 let sourceURL = Bundle.main.url(
-                    forResource: (file as NSString).deletingPathExtension,
-                    withExtension: (file as NSString).pathExtension
+                    forResource: (fileName as NSString).deletingPathExtension,
+                    withExtension: (fileName as NSString).pathExtension
                 )
                 guard let sourceURL else { continue }
-                try fileManager.copyItem(at: sourceURL, to: destination.appendingPathComponent(file))
+                let targetURL = destination.appendingPathComponent(file)
+                try fileManager.createDirectory(at: targetURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try fileManager.copyItem(at: sourceURL, to: targetURL)
             }
             UserDefaults.standard.set(true, forKey: bundledSampleInstallKey)
         } catch {

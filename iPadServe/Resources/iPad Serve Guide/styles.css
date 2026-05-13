@@ -78,7 +78,7 @@ a {
 
 .icon-button,
 .primary-action,
-.website-preview button {
+.inline-action {
   min-height: 44px;
   border: 0;
   border-radius: 999px;
@@ -201,6 +201,7 @@ h2 {
 }
 
 .screen {
+  margin: 0;
   min-height: 320px;
   border-radius: 8px;
   overflow: hidden;
@@ -210,103 +211,21 @@ h2 {
   transition: transform .25s ease, box-shadow .25s ease;
 }
 
+.screen img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .screen:hover {
   transform: translateY(-4px);
   box-shadow: 0 34px 90px rgba(18, 32, 42, .18);
 }
 
-.topbar,
-.mini-toolbar {
-  height: 42px;
-  background: var(--deep);
-}
-
-.split {
-  display: grid;
-  grid-template-columns: 34% 1fr;
-  min-height: 278px;
-}
-
-.sidebar {
-  padding: 26px;
-  background: #eef4f5;
-}
-
-.sidebar span,
-.file-list b {
-  display: block;
-  height: 34px;
-  margin-bottom: 14px;
-  border-radius: 6px;
-  background: white;
-}
-
-.canvas {
-  padding: 38px;
-}
-
-.canvas strong,
-.website-preview h4 {
-  display: block;
-  margin-bottom: 12px;
-  font-size: 30px;
-}
-
-.canvas p,
-.website-preview p,
 .shot-copy p,
 .checks span {
   color: var(--muted);
   line-height: 1.55;
-}
-
-.dark {
-  background: #102b3a;
-}
-
-.dark .topbar {
-  background: #071722;
-}
-
-.file-list {
-  padding: 34px;
-}
-
-.file-list b {
-  height: auto;
-  padding: 16px 18px;
-  color: #dcecef;
-  background: rgba(255, 255, 255, .08);
-  font-size: 16px;
-}
-
-.browser {
-  background: #f4f7f7;
-}
-
-.mini-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-left: 18px;
-}
-
-.mini-toolbar i {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, .24);
-}
-
-.website-preview {
-  padding: 44px;
-}
-
-.website-preview button {
-  padding: 0 18px;
-  background: var(--teal);
-  color: white;
-  font-weight: 800;
 }
 
 .shot-copy span {
@@ -320,6 +239,14 @@ h2 {
   margin-bottom: 12px;
   font-size: clamp(28px, 4vw, 44px);
   line-height: 1;
+}
+
+.inline-action {
+  margin-top: 10px;
+  padding: 0 18px;
+  background: var(--teal);
+  color: white;
+  font-weight: 800;
 }
 
 .checks {

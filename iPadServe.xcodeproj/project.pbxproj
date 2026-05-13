@@ -9,12 +9,15 @@
 /* Begin PBXBuildFile section */
 		00655769839F5784B3884BDC /* FileScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E916A31E3576EEFF876E75 /* FileScanner.swift */; };
 		096C0408F985B6F51ABE1B5F /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1EBE2081E3CD55BA3E562 /* ProjectDetailView.swift */; };
+		15BB8A83DDE3AC79A396D4D8 /* 01-import-folder.svg in Resources */ = {isa = PBXBuildFile; fileRef = FEF453D76245BE0283E50BDE /* 01-import-folder.svg */; };
 		31860E6047E014BE5165051E /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 74C180DDB03E9FF0055F4DEB /* index.html */; };
 		4FC615CCC6C1565E23A3B9E7 /* app.js in Resources */ = {isa = PBXBuildFile; fileRef = F2E97171319928192228B0E5 /* app.js */; };
+		667C7057B1F5098C9EE3588F /* 02-file-browser.svg in Resources */ = {isa = PBXBuildFile; fileRef = F74EBD938697297782615250 /* 02-file-browser.svg */; };
 		69BD26AD54B7F2CE936F3DF2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD34D1FFD46B276982828FB /* ContentView.swift */; };
 		6CD991B748BCF884352F06B2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E274F1544FB187C52361CD0E /* Assets.xcassets */; };
 		6F4C044300F77AC65E416768 /* ProjectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7EA6B76040E95431A5F67 /* ProjectItem.swift */; };
 		8FFDA89A9F8EEA3B879E992F /* iPadServeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAD6E51FB0E5E37242168B5B /* iPadServeApp.swift */; };
+		91138D4626D5DB9EE98C7E09 /* 03-running-site.svg in Resources */ = {isa = PBXBuildFile; fileRef = 56B1BA08BC2BB784D841A3DD /* 03-running-site.svg */; };
 		9F08ABEFD18C9D0DBA2733D7 /* ProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3177DDB36A1B8E896725D41C /* ProjectStore.swift */; };
 		A2C368F7AC29AA5479756F1D /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7B25F8CF8342F52D44560B /* BrowserView.swift */; };
 		AFF9C1450F0CC482E2509114 /* LocalHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCE1D5AC59587DEF80E3AC4 /* LocalHTTPServer.swift */; };
@@ -28,6 +31,7 @@
 		22E916A31E3576EEFF876E75 /* FileScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScanner.swift; sourceTree = "<group>"; };
 		3177DDB36A1B8E896725D41C /* ProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStore.swift; sourceTree = "<group>"; };
 		47853D42540B1D2B5E525451 /* MimeTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MimeTypes.swift; sourceTree = "<group>"; };
+		56B1BA08BC2BB784D841A3DD /* 03-running-site.svg */ = {isa = PBXFileReference; path = "03-running-site.svg"; sourceTree = "<group>"; };
 		57B1EBE2081E3CD55BA3E562 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
 		74C180DDB03E9FF0055F4DEB /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = index.html; sourceTree = "<group>"; };
 		8A6BAADAEFA2CA55FEF65823 /* styles.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = styles.css; sourceTree = "<group>"; };
@@ -38,6 +42,8 @@
 		E274F1544FB187C52361CD0E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E9D7EA6B76040E95431A5F67 /* ProjectItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectItem.swift; sourceTree = "<group>"; };
 		F2E97171319928192228B0E5 /* app.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = app.js; sourceTree = "<group>"; };
+		F74EBD938697297782615250 /* 02-file-browser.svg */ = {isa = PBXFileReference; path = "02-file-browser.svg"; sourceTree = "<group>"; };
+		FEF453D76245BE0283E50BDE /* 01-import-folder.svg */ = {isa = PBXFileReference; path = "01-import-folder.svg"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -55,6 +61,7 @@
 				F2E97171319928192228B0E5 /* app.js */,
 				74C180DDB03E9FF0055F4DEB /* index.html */,
 				8A6BAADAEFA2CA55FEF65823 /* styles.css */,
+				ED7E7F61017621FD045C63D2 /* screenshots */,
 			);
 			path = "iPad Serve Guide";
 			sourceTree = "<group>";
@@ -92,6 +99,16 @@
 				6F7A77958937710AE17E8032 /* Sources */,
 			);
 			path = iPadServe;
+			sourceTree = "<group>";
+		};
+		ED7E7F61017621FD045C63D2 /* screenshots */ = {
+			isa = PBXGroup;
+			children = (
+				FEF453D76245BE0283E50BDE /* 01-import-folder.svg */,
+				F74EBD938697297782615250 /* 02-file-browser.svg */,
+				56B1BA08BC2BB784D841A3DD /* 03-running-site.svg */,
+			);
+			path = screenshots;
 			sourceTree = "<group>";
 		};
 		FCE938F798FC5EB6EB1DBCD4 = {
@@ -162,6 +179,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				15BB8A83DDE3AC79A396D4D8 /* 01-import-folder.svg in Resources */,
+				667C7057B1F5098C9EE3588F /* 02-file-browser.svg in Resources */,
+				91138D4626D5DB9EE98C7E09 /* 03-running-site.svg in Resources */,
 				6CD991B748BCF884352F06B2 /* Assets.xcassets in Resources */,
 				4FC615CCC6C1565E23A3B9E7 /* app.js in Resources */,
 				31860E6047E014BE5165051E /* index.html in Resources */,

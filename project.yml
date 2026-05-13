@@ -12,7 +12,7 @@ targets:
     type: application
     platform: iOS
     sources:
-      - path: iPadServe/Sources
+      - path: iPadServe
     resources:
       - path: iPadServe/Resources/Assets.xcassets
     settings:

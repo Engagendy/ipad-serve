@@ -7,28 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2471A3086EA448801D2C6D9F /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ADFC9995EC737169955B37A /* ProjectDetailView.swift */; };
-		367BEF6386CA3F8B08287A12 /* ProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 988A09087DC1D6146176E64E /* ProjectStore.swift */; };
-		4FCAE34E753CC59080126630 /* FileScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C4CEA6214449D1A9EFD98D8 /* FileScanner.swift */; };
-		6811B0956E99A1E8B5A9DAF1 /* ProjectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C077E56442AFD7511C94B3E4 /* ProjectItem.swift */; };
-		6825A7DC069793A749404101 /* MimeTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 140B2301CFD71DA834E9817D /* MimeTypes.swift */; };
-		6A1A5DFBF57332196708733C /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90EC5687FCFE91A8E4DF3331 /* BrowserView.swift */; };
-		A90C97B716307623AB726EAF /* LocalHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 930D0538965C77CA94680A79 /* LocalHTTPServer.swift */; };
-		F83DE2EF4F56E1AF920829B7 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36459FE6C3AF2C60F4E02E19 /* ContentView.swift */; };
-		FFF7B955A59AE783A2582F0B /* iPadServeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8609B345E428F6C3AA8F3E76 /* iPadServeApp.swift */; };
+		00655769839F5784B3884BDC /* FileScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E916A31E3576EEFF876E75 /* FileScanner.swift */; };
+		096C0408F985B6F51ABE1B5F /* ProjectDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B1EBE2081E3CD55BA3E562 /* ProjectDetailView.swift */; };
+		69BD26AD54B7F2CE936F3DF2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD34D1FFD46B276982828FB /* ContentView.swift */; };
+		6CD991B748BCF884352F06B2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E274F1544FB187C52361CD0E /* Assets.xcassets */; };
+		6F4C044300F77AC65E416768 /* ProjectItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D7EA6B76040E95431A5F67 /* ProjectItem.swift */; };
+		8FFDA89A9F8EEA3B879E992F /* iPadServeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAD6E51FB0E5E37242168B5B /* iPadServeApp.swift */; };
+		9F08ABEFD18C9D0DBA2733D7 /* ProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3177DDB36A1B8E896725D41C /* ProjectStore.swift */; };
+		A2C368F7AC29AA5479756F1D /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7B25F8CF8342F52D44560B /* BrowserView.swift */; };
+		AFF9C1450F0CC482E2509114 /* LocalHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCE1D5AC59587DEF80E3AC4 /* LocalHTTPServer.swift */; };
+		BFF97B4B6086FBB4915BE4ED /* MimeTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47853D42540B1D2B5E525451 /* MimeTypes.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0AD34D1FFD46B276982828FB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		128DF8F01B56A6C362C01E2A /* iPadServe.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = iPadServe.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		140B2301CFD71DA834E9817D /* MimeTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MimeTypes.swift; sourceTree = "<group>"; };
-		1ADFC9995EC737169955B37A /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
-		36459FE6C3AF2C60F4E02E19 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		3C4CEA6214449D1A9EFD98D8 /* FileScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScanner.swift; sourceTree = "<group>"; };
-		8609B345E428F6C3AA8F3E76 /* iPadServeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPadServeApp.swift; sourceTree = "<group>"; };
-		90EC5687FCFE91A8E4DF3331 /* BrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserView.swift; sourceTree = "<group>"; };
-		930D0538965C77CA94680A79 /* LocalHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalHTTPServer.swift; sourceTree = "<group>"; };
-		988A09087DC1D6146176E64E /* ProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStore.swift; sourceTree = "<group>"; };
-		C077E56442AFD7511C94B3E4 /* ProjectItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectItem.swift; sourceTree = "<group>"; };
+		22E916A31E3576EEFF876E75 /* FileScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScanner.swift; sourceTree = "<group>"; };
+		3177DDB36A1B8E896725D41C /* ProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStore.swift; sourceTree = "<group>"; };
+		47853D42540B1D2B5E525451 /* MimeTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MimeTypes.swift; sourceTree = "<group>"; };
+		57B1EBE2081E3CD55BA3E562 /* ProjectDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDetailView.swift; sourceTree = "<group>"; };
+		8A7B25F8CF8342F52D44560B /* BrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserView.swift; sourceTree = "<group>"; };
+		8DCE1D5AC59587DEF80E3AC4 /* LocalHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalHTTPServer.swift; sourceTree = "<group>"; };
+		AFC14146FA3C6AFF2BA44B5A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		CAD6E51FB0E5E37242168B5B /* iPadServeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPadServeApp.swift; sourceTree = "<group>"; };
+		E274F1544FB187C52361CD0E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E9D7EA6B76040E95431A5F67 /* ProjectItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectItem.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -40,27 +43,44 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		57F1CF09ADA3437F3B315C0E /* Sources */ = {
+		64A9E76565D00B44254DB57A /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				90EC5687FCFE91A8E4DF3331 /* BrowserView.swift */,
-				36459FE6C3AF2C60F4E02E19 /* ContentView.swift */,
-				3C4CEA6214449D1A9EFD98D8 /* FileScanner.swift */,
-				8609B345E428F6C3AA8F3E76 /* iPadServeApp.swift */,
-				930D0538965C77CA94680A79 /* LocalHTTPServer.swift */,
-				140B2301CFD71DA834E9817D /* MimeTypes.swift */,
-				1ADFC9995EC737169955B37A /* ProjectDetailView.swift */,
-				C077E56442AFD7511C94B3E4 /* ProjectItem.swift */,
-				988A09087DC1D6146176E64E /* ProjectStore.swift */,
+				E274F1544FB187C52361CD0E /* Assets.xcassets */,
+				AFC14146FA3C6AFF2BA44B5A /* Info.plist */,
 			);
-			name = Sources;
-			path = iPadServe/Sources;
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		6F7A77958937710AE17E8032 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				8A7B25F8CF8342F52D44560B /* BrowserView.swift */,
+				0AD34D1FFD46B276982828FB /* ContentView.swift */,
+				22E916A31E3576EEFF876E75 /* FileScanner.swift */,
+				CAD6E51FB0E5E37242168B5B /* iPadServeApp.swift */,
+				8DCE1D5AC59587DEF80E3AC4 /* LocalHTTPServer.swift */,
+				47853D42540B1D2B5E525451 /* MimeTypes.swift */,
+				57B1EBE2081E3CD55BA3E562 /* ProjectDetailView.swift */,
+				E9D7EA6B76040E95431A5F67 /* ProjectItem.swift */,
+				3177DDB36A1B8E896725D41C /* ProjectStore.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		8466A9E028A929CF27D90293 /* iPadServe */ = {
+			isa = PBXGroup;
+			children = (
+				64A9E76565D00B44254DB57A /* Resources */,
+				6F7A77958937710AE17E8032 /* Sources */,
+			);
+			path = iPadServe;
 			sourceTree = "<group>";
 		};
 		FCE938F798FC5EB6EB1DBCD4 = {
 			isa = PBXGroup;
 			children = (
-				57F1CF09ADA3437F3B315C0E /* Sources */,
+				8466A9E028A929CF27D90293 /* iPadServe */,
 				148C710AFBC7966DD991F6ED /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,6 +93,7 @@
 			buildConfigurationList = AFBF4806929E8CE3385FA337 /* Build configuration list for PBXNativeTarget "iPadServe" */;
 			buildPhases = (
 				DB8450C9E5F012EDB70E88A1 /* Sources */,
+				F2B3B90B7F40FF9BAB5A3084 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -119,20 +140,31 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		F2B3B90B7F40FF9BAB5A3084 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6CD991B748BCF884352F06B2 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		DB8450C9E5F012EDB70E88A1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6A1A5DFBF57332196708733C /* BrowserView.swift in Sources */,
-				F83DE2EF4F56E1AF920829B7 /* ContentView.swift in Sources */,
-				4FCAE34E753CC59080126630 /* FileScanner.swift in Sources */,
-				A90C97B716307623AB726EAF /* LocalHTTPServer.swift in Sources */,
-				6825A7DC069793A749404101 /* MimeTypes.swift in Sources */,
-				2471A3086EA448801D2C6D9F /* ProjectDetailView.swift in Sources */,
-				6811B0956E99A1E8B5A9DAF1 /* ProjectItem.swift in Sources */,
-				367BEF6386CA3F8B08287A12 /* ProjectStore.swift in Sources */,
-				FFF7B955A59AE783A2582F0B /* iPadServeApp.swift in Sources */,
+				A2C368F7AC29AA5479756F1D /* BrowserView.swift in Sources */,
+				69BD26AD54B7F2CE936F3DF2 /* ContentView.swift in Sources */,
+				00655769839F5784B3884BDC /* FileScanner.swift in Sources */,
+				AFF9C1450F0CC482E2509114 /* LocalHTTPServer.swift in Sources */,
+				BFF97B4B6086FBB4915BE4ED /* MimeTypes.swift in Sources */,
+				096C0408F985B6F51ABE1B5F /* ProjectDetailView.swift in Sources */,
+				6F4C044300F77AC65E416768 /* ProjectItem.swift in Sources */,
+				9F08ABEFD18C9D0DBA2733D7 /* ProjectStore.swift in Sources */,
+				8FFDA89A9F8EEA3B879E992F /* iPadServeApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

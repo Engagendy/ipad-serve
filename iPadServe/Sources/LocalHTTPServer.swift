@@ -5,6 +5,7 @@ import Network
 final class LocalHTTPServer: ObservableObject {
     @Published private(set) var port: UInt16?
     @Published private(set) var isRunning = false
+    @Published private(set) var isStarting = false
 
     private var listener: NWListener?
     private let queue = DispatchQueue(label: "com.engagendy.HTMLServe.http")
@@ -12,13 +13,27 @@ final class LocalHTTPServer: ObservableObject {
     func start() async throws {
         if isRunning, port != nil, listener != nil { return }
 
+        if isStarting {
+            _ = await waitUntilReady()
+            if isRunning, port != nil, listener != nil { return }
+        }
+
         if listener != nil {
             stop()
         }
 
         let parameters = NWParameters.tcp
         parameters.allowLocalEndpointReuse = true
-        let listener = try NWListener(using: parameters, on: .any)
+        isStarting = true
+
+        let listener: NWListener
+        do {
+            listener = try NWListener(using: parameters, on: .any)
+        } catch {
+            isStarting = false
+            throw error
+        }
+
         listener.service = nil
         listener.stateUpdateHandler = { [weak self, weak listener] state in
             guard let listener else { return }
@@ -29,13 +44,16 @@ final class LocalHTTPServer: ObservableObject {
                 case .ready:
                     self.port = listener.port?.rawValue
                     self.isRunning = listener.port != nil
+                    self.isStarting = false
                 case .waiting:
                     self.port = nil
                     self.isRunning = false
+                    self.isStarting = false
                 case .failed, .cancelled:
                     self.listener = nil
                     self.port = nil
                     self.isRunning = false
+                    self.isStarting = false
                 default:
                     break
                 }
@@ -52,6 +70,7 @@ final class LocalHTTPServer: ObservableObject {
     func ensureRunning() async throws {
         if isRunning, port != nil, listener != nil { return }
         try await start()
+        _ = await waitUntilReady()
     }
 
     func restart() async throws {
@@ -64,6 +83,7 @@ final class LocalHTTPServer: ObservableObject {
         listener = nil
         port = nil
         isRunning = false
+        isStarting = false
     }
 
     func url(for project: ProjectItem, file: ProjectFile) -> URL? {
@@ -78,6 +98,22 @@ final class LocalHTTPServer: ObservableObject {
     private nonisolated func handle(_ connection: NWConnection) {
         connection.start(queue: queue)
         receive(on: connection, buffer: Data())
+    }
+
+    private func waitUntilReady() async -> Bool {
+        for _ in 0..<20 {
+            if isRunning, port != nil, listener != nil {
+                return true
+            }
+
+            if !isStarting, listener == nil {
+                return false
+            }
+
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+
+        return isRunning && port != nil && listener != nil
     }
 
     private nonisolated func receive(on connection: NWConnection, buffer: Data) {

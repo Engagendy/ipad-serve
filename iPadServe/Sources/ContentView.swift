@@ -63,7 +63,7 @@ struct ContentView: View {
             Text(store.importError ?? "The folder could not be imported.")
         }
         .overlay(alignment: .bottom) {
-            ServerStatusView(isRunning: server.isRunning, port: server.port)
+            ServerStatusView(isRunning: server.isRunning, isStarting: server.isStarting, port: server.port)
                 .padding()
         }
         .task {
@@ -102,18 +102,39 @@ private struct ProjectRow: View {
 
 private struct ServerStatusView: View {
     let isRunning: Bool
+    let isStarting: Bool
     let port: UInt16?
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: isRunning ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundStyle(isRunning ? .green : .red)
-            Text(isRunning ? "Local server running on 127.0.0.1:\(port.map(String.init) ?? "-")" : "Server stopped")
+            Image(systemName: iconName)
+                .foregroundStyle(iconColor)
+            Text(statusText)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(.regularMaterial, in: Capsule())
+    }
+
+    private var iconName: String {
+        if isRunning { return "checkmark.circle.fill" }
+        if isStarting { return "clock.fill" }
+        return "xmark.circle.fill"
+    }
+
+    private var iconColor: Color {
+        if isRunning { return .green }
+        if isStarting { return .orange }
+        return .red
+    }
+
+    private var statusText: String {
+        if isRunning {
+            return "Local server running on 127.0.0.1:\(port.map(String.init) ?? "-")"
+        }
+
+        return isStarting ? "Starting local server..." : "Server stopped"
     }
 }

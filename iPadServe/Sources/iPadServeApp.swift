@@ -12,7 +12,7 @@ struct iPadServeApp: App {
                 .environmentObject(server)
                 .task {
                     store.loadProjects()
-                    try? await server.start()
+                    try? await server.ensureRunning()
                 }
         }
     }

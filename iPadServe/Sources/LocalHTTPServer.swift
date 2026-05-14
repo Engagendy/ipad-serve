@@ -7,10 +7,14 @@ final class LocalHTTPServer: ObservableObject {
     @Published private(set) var isRunning = false
 
     private var listener: NWListener?
-    private let queue = DispatchQueue(label: "com.engagendy.iPadServe.http")
+    private let queue = DispatchQueue(label: "com.engagendy.HTMLServe.http")
 
     func start() async throws {
-        if listener != nil { return }
+        if isRunning, port != nil, listener != nil { return }
+
+        if listener != nil {
+            stop()
+        }
 
         let parameters = NWParameters.tcp
         parameters.allowLocalEndpointReuse = true
@@ -19,13 +23,19 @@ final class LocalHTTPServer: ObservableObject {
         listener.stateUpdateHandler = { [weak self, weak listener] state in
             guard let listener else { return }
             Task { @MainActor in
+                guard let self, self.listener === listener else { return }
+
                 switch state {
                 case .ready:
-                    self?.port = listener.port?.rawValue
-                    self?.isRunning = listener.port != nil
+                    self.port = listener.port?.rawValue
+                    self.isRunning = listener.port != nil
+                case .waiting:
+                    self.port = nil
+                    self.isRunning = false
                 case .failed, .cancelled:
-                    self?.port = nil
-                    self?.isRunning = false
+                    self.listener = nil
+                    self.port = nil
+                    self.isRunning = false
                 default:
                     break
                 }
@@ -37,6 +47,16 @@ final class LocalHTTPServer: ObservableObject {
 
         self.listener = listener
         listener.start(queue: queue)
+    }
+
+    func ensureRunning() async throws {
+        if isRunning, port != nil, listener != nil { return }
+        try await start()
+    }
+
+    func restart() async throws {
+        stop()
+        try await start()
     }
 
     func stop() {
@@ -243,7 +263,7 @@ final class LocalHTTPServer: ObservableObject {
     ) {
         var responseHeaders = headers
         responseHeaders["Connection"] = "close"
-        responseHeaders["Server"] = "iPadServe"
+        responseHeaders["Server"] = "HTMLServe"
         if responseHeaders["Content-Length"] == nil {
             responseHeaders["Content-Length"] = "\(body.count)"
         }

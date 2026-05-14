@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @EnvironmentObject private var store: ProjectStore
     @EnvironmentObject private var server: LocalHTTPServer
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedProject: ProjectItem?
     @State private var isImporting = false
 
@@ -42,7 +43,7 @@ struct ContentView: View {
             if let selectedProject {
                 ProjectDetailView(project: selectedProject)
             } else {
-                ContentUnavailableView("Select a Project", systemImage: "ipad")
+                ContentUnavailableView("Select a Project", systemImage: "rectangle.stack")
             }
         }
         .fileImporter(
@@ -64,6 +65,15 @@ struct ContentView: View {
         .overlay(alignment: .bottom) {
             ServerStatusView(isRunning: server.isRunning, port: server.port)
                 .padding()
+        }
+        .task {
+            try? await server.ensureRunning()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task {
+                try? await server.ensureRunning()
+            }
         }
         .onChange(of: store.projects) { _, projects in
             if let selectedID = selectedProject?.id,

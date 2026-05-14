@@ -4,6 +4,7 @@ struct ProjectDetailView: View {
     @EnvironmentObject private var server: LocalHTTPServer
     let project: ProjectItem
     @State private var selectedPage: BrowserPage?
+    @State private var openError: String?
 
     var body: some View {
         Group {
@@ -16,7 +17,7 @@ struct ProjectDetailView: View {
                     Section {
                         OutlineGroup(project.rootBrowserItems, children: \.outlineChildren) { item in
                             ProjectBrowserRow(item: item) {
-                                open(item)
+                                Task { await open(item) }
                             }
                         }
                     } header: {
@@ -28,12 +29,12 @@ struct ProjectDetailView: View {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             if let entry = project.preferredEntry {
-                                open(entry)
+                                Task { await open(entry) }
                             }
                         } label: {
                             Label("Run", systemImage: "play.fill")
                         }
-                        .disabled(project.preferredEntry == nil || server.port == nil)
+                        .disabled(project.preferredEntry == nil)
                     }
                 }
                 .overlay {
@@ -48,20 +49,49 @@ struct ProjectDetailView: View {
             }
         }
         .task {
-            if !server.isRunning {
-                try? await server.start()
-            }
+            try? await server.ensureRunning()
+        }
+        .alert("Could Not Open Page", isPresented: Binding(
+            get: { openError != nil },
+            set: { if !$0 { openError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(openError ?? "The local server could not open this file.")
         }
     }
 
-    private func open(_ file: ProjectFile) {
-        guard let url = server.url(for: project, file: file) else { return }
+    private func open(_ file: ProjectFile) async {
+        do {
+            try await server.ensureRunning()
+        } catch {
+            openError = "The local server could not start. \(error.localizedDescription)"
+            return
+        }
+
+        guard let url = await serverURL(for: file) else {
+            openError = "The local server is not ready yet. Try opening the page again."
+            return
+        }
+
         selectedPage = BrowserPage(title: file.name, url: url)
     }
 
-    private func open(_ item: ProjectBrowserItem) {
+    private func serverURL(for file: ProjectFile) async -> URL? {
+        for _ in 0..<20 {
+            if let url = server.url(for: project, file: file) {
+                return url
+            }
+
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+
+        return nil
+    }
+
+    private func open(_ item: ProjectBrowserItem) async {
         guard item.kind != .folder, let file = item.projectFile else { return }
-        open(file)
+        await open(file)
     }
 }
 

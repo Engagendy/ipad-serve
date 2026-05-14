@@ -345,7 +345,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.engagendy.iPadServe;
-				PRODUCT_NAME = "iPad Serve";
+				PRODUCT_NAME = "HTML Serve";
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = 2;
@@ -364,7 +364,7 @@
 					"@loader_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.engagendy.iPadServeUITests;
-				PRODUCT_NAME = "iPad Serve UI Tests";
+				PRODUCT_NAME = "HTML Serve UI Tests";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = iPadServe;
@@ -450,7 +450,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.engagendy.iPadServe;
-				PRODUCT_NAME = "iPad Serve";
+				PRODUCT_NAME = "HTML Serve";
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = 2;
@@ -469,7 +469,7 @@
 					"@loader_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.engagendy.iPadServeUITests;
-				PRODUCT_NAME = "iPad Serve UI Tests";
+				PRODUCT_NAME = "HTML Serve UI Tests";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = iPadServe;

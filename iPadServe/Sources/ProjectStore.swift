@@ -7,8 +7,8 @@ final class ProjectStore: ObservableObject {
     @Published var importError: String?
 
     private let fileManager = FileManager.default
-    private let bundledSampleName = "iPad Serve Guide"
-    private let bundledSampleInstallKey = "didInstallBundledSampleProject.v4"
+    private let bundledSampleName = "HTML Serve Guide"
+    private let bundledSampleInstallKey = "didInstallBundledSampleProject.v5"
     private let bundledSampleFiles = [
         "index.html",
         "styles.css",

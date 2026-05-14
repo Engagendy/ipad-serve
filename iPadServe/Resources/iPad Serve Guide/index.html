@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>iPad Serve Guide</title>
+  <title>HTML Serve Guide</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <nav class="topbar">
-    <a class="brand" href="#">iPad Serve</a>
+    <a class="brand" href="#">HTML Serve</a>
     <div class="nav-links">
       <a href="#steps">Steps</a>
       <a href="#checks">Checks</a>
@@ -21,18 +21,30 @@
       <div class="hero-bg"></div>
       <div class="hero-inner">
         <section class="hero-copy">
-          <span class="pill">Runs fully on iPad</span>
-          <h1>Open complete HTML projects without a Mac server.</h1>
-          <p>Import a folder, choose a page, and iPad Serve hosts the project locally so CSS, JavaScript, images, video, and links resolve correctly.</p>
+          <span class="pill">Runs fully on device</span>
+          <h1>Open complete HTML projects without a desktop server.</h1>
+          <p>Import a folder, choose a page, and HTML Serve hosts the project locally so CSS, JavaScript, images, video, and links resolve correctly.</p>
           <div class="hero-actions">
             <a class="primary-action" href="#steps">See the workflow</a>
             <span class="server-status"><i></i>Local server running on 127.0.0.1:51324</span>
           </div>
         </section>
 
-        <figure class="device-frame hero-device">
-          <img src="screenshots/03-running-guide.png" alt="iPad Serve running the bundled guide in the embedded browser">
-        </figure>
+        <div class="hero-visual" aria-label="Static HTML project preview">
+          <div class="visual-sidebar">
+            <span>index.html</span>
+            <span>styles.css</span>
+            <span>app.js</span>
+            <span>media.mov</span>
+          </div>
+          <div class="visual-code">
+            <span>&lt;main&gt;</span>
+            <strong>Local project</strong>
+            <span>assets load from folder</span>
+            <span>JavaScript runs in WebKit</span>
+            <span>&lt;/main&gt;</span>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -52,18 +64,18 @@
 
       <article class="step reveal">
         <figure class="device-frame">
-          <img src="screenshots/01-projects.png" alt="iPad Serve project browser showing the bundled guide project and its files">
+          <img src="screenshots/01-projects.png" alt="HTML Serve project browser showing the bundled guide project and its files">
         </figure>
         <div class="step-copy">
           <span>01</span>
           <h3>Import a folder</h3>
-          <p>Copy your website to iPad using Files, iCloud Drive, AirDrop, or USB-C storage, then import the whole folder.</p>
+          <p>Copy your website using Files, cloud storage, AirDrop, or USB-C storage, then import the whole folder.</p>
         </div>
       </article>
 
       <article class="step step-reverse reveal">
         <figure class="device-frame">
-          <img src="screenshots/02-file-browser.png" alt="iPad Serve file browser showing folders, HTML, CSS, and JavaScript files">
+          <img src="screenshots/02-file-browser.png" alt="HTML Serve file browser showing folders, HTML, CSS, and JavaScript files">
         </figure>
         <div class="step-copy">
           <span>02</span>
@@ -74,12 +86,12 @@
 
       <article class="step reveal">
         <figure class="device-frame">
-          <img src="screenshots/03-running-guide.png" alt="The bundled guide running inside iPad Serve with the local server active">
+          <img src="screenshots/03-running-guide.png" alt="The bundled guide running inside HTML Serve with the local server active">
         </figure>
         <div class="step-copy">
           <span>03</span>
           <h3>Run locally</h3>
-          <p>iPad Serve starts a private server on the iPad and serves the selected files to WebKit for authentic browsing.</p>
+          <p>HTML Serve starts a private server on the device and serves the selected files to WebKit for authentic browsing.</p>
           <button class="secondary-action" id="previewModal">Try JS modal</button>
         </div>
       </article>
@@ -112,8 +124,8 @@
 
   <footer class="footer">
     <div>
-      <strong>iPad Serve</strong>
-      <p>Built for local technical workflows on iPad.</p>
+      <strong>HTML Serve</strong>
+      <p>Built for local technical workflows on device.</p>
     </div>
     <a href="#steps">Workflow</a>
   </footer>

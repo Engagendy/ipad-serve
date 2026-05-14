@@ -10,7 +10,7 @@ final class iPadServeUITests: XCTestCase {
         app.launch()
         XCUIDevice.shared.orientation = .landscapeLeft
 
-        XCTAssertTrue(app.staticTexts["iPad Serve Guide"].waitForExistence(timeout: 12))
+        XCTAssertTrue(app.staticTexts["HTML Serve Guide"].waitForExistence(timeout: 12))
         addScreenshot(named: "01-projects")
 
         XCTAssertTrue(app.staticTexts["Files"].waitForExistence(timeout: 8))

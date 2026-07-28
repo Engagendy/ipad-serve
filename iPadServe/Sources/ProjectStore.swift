@@ -1,12 +1,17 @@
 import Foundation
+import UIKit
 import UniformTypeIdentifiers
 
 @MainActor
 final class ProjectStore: ObservableObject {
     @Published private(set) var projects: [ProjectItem] = []
+    @Published private(set) var favoriteNames: Set<String> = []
+    @Published private(set) var defaultProjectName: String?
     @Published var importError: String?
 
     private let fileManager = FileManager.default
+    private let favoritesKey = "favoriteProjectNames"
+    private let defaultProjectKey = "defaultProjectName"
     private let bundledSampleName = "HTML Serve Guide"
     private let bundledSampleInstallKey = "didInstallBundledSampleProject.v5"
     private let bundledSampleFiles = [
@@ -27,6 +32,9 @@ final class ProjectStore: ObservableObject {
         try? fileManager.createDirectory(at: projectsDirectory, withIntermediateDirectories: true)
         installBundledSampleIfNeeded()
 
+        favoriteNames = Set(UserDefaults.standard.stringArray(forKey: favoritesKey) ?? [])
+        defaultProjectName = UserDefaults.standard.string(forKey: defaultProjectKey)
+
         let folders = (try? fileManager.contentsOfDirectory(
             at: projectsDirectory,
             includingPropertiesForKeys: [.isDirectoryKey],
@@ -38,6 +46,62 @@ final class ProjectStore: ObservableObject {
             return ProjectItem(id: stableID(for: url), name: url.lastPathComponent, rootURL: url)
         }
         .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+
+        updateHomeScreenQuickActions()
+    }
+
+    var favoriteProjects: [ProjectItem] {
+        projects.filter { favoriteNames.contains($0.name) }
+    }
+
+    var otherProjects: [ProjectItem] {
+        projects.filter { !favoriteNames.contains($0.name) }
+    }
+
+    var defaultProject: ProjectItem? {
+        guard let defaultProjectName else { return nil }
+        return projects.first { $0.name == defaultProjectName }
+    }
+
+    func project(named name: String) -> ProjectItem? {
+        projects.first { $0.name == name }
+    }
+
+    func isFavorite(_ project: ProjectItem) -> Bool {
+        favoriteNames.contains(project.name)
+    }
+
+    func toggleFavorite(_ project: ProjectItem) {
+        if favoriteNames.contains(project.name) {
+            favoriteNames.remove(project.name)
+        } else {
+            favoriteNames.insert(project.name)
+        }
+        UserDefaults.standard.set(Array(favoriteNames).sorted(), forKey: favoritesKey)
+        updateHomeScreenQuickActions()
+    }
+
+    func isDefault(_ project: ProjectItem) -> Bool {
+        project.name == defaultProjectName
+    }
+
+    func setDefault(_ project: ProjectItem?) {
+        defaultProjectName = project?.name
+        UserDefaults.standard.set(defaultProjectName, forKey: defaultProjectKey)
+    }
+
+    /// Long-pressing the app icon offers the favorite projects (iOS shows at most 4).
+    private func updateHomeScreenQuickActions() {
+        let items = favoriteProjects.prefix(4).map { project in
+            UIApplicationShortcutItem(
+                type: LaunchRouter.quickActionType,
+                localizedTitle: project.name,
+                localizedSubtitle: "Open project",
+                icon: UIApplicationShortcutIcon(systemImageName: "play.rectangle"),
+                userInfo: [LaunchRouter.quickActionProjectKey: project.name as NSString]
+            )
+        }
+        UIApplication.shared.shortcutItems = Array(items)
     }
 
     func importFolder(from sourceURL: URL) {
@@ -62,6 +126,13 @@ final class ProjectStore: ObservableObject {
     func delete(_ project: ProjectItem) {
         do {
             try fileManager.removeItem(at: project.rootURL)
+            if favoriteNames.contains(project.name) {
+                favoriteNames.remove(project.name)
+                UserDefaults.standard.set(Array(favoriteNames).sorted(), forKey: favoritesKey)
+            }
+            if defaultProjectName == project.name {
+                setDefault(nil)
+            }
             loadProjects()
         } catch {
             importError = error.localizedDescription

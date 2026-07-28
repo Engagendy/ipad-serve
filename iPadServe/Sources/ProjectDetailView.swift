@@ -3,15 +3,23 @@ import SwiftUI
 struct ProjectDetailView: View {
     @EnvironmentObject private var server: LocalHTTPServer
     let project: ProjectItem
+    var autoRun = false
+    var onAutoRunConsumed: () -> Void = {}
+    var goHome: () -> Void = {}
     @State private var selectedPage: BrowserPage?
     @State private var openError: String?
 
     var body: some View {
         Group {
             if let selectedPage {
-                BrowserView(page: selectedPage) {
-                    self.selectedPage = nil
-                }
+                BrowserView(
+                    page: selectedPage,
+                    close: { self.selectedPage = nil },
+                    goHome: {
+                        self.selectedPage = nil
+                        goHome()
+                    }
+                )
             } else {
                 List {
                     Section {
@@ -48,8 +56,14 @@ struct ProjectDetailView: View {
                 }
             }
         }
-        .task {
+        .task(id: autoRun) {
             try? await server.ensureRunning()
+            if autoRun {
+                onAutoRunConsumed()
+                if let entry = project.preferredEntry {
+                    await open(entry)
+                }
+            }
         }
         .alert("Could Not Open Page", isPresented: Binding(
             get: { openError != nil },

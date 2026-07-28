@@ -35,6 +35,38 @@ The project is generated from `project.yml` using XcodeGen:
 xcodegen generate
 ```
 
+## Release (Xcode Cloud)
+
+There is no CI pipeline in this repo (no GitHub Actions). Builds run on
+**Xcode Cloud**, which is configured in App Store Connect, not in git.
+GitHub only hosts the source; Apple pulls from it.
+
+Where to see builds:
+
+- App Store Connect → the app → **Xcode Cloud** tab, or
+- Xcode → Report Navigator (⌘9) → **Cloud** tab
+
+### Release checklist
+
+1. Bump the version in `project.yml` (`MARKETING_VERSION` and
+   `CURRENT_PROJECT_VERSION`). Always bump it there, **not** in the
+   `.pbxproj` — `xcodegen generate` overwrites the pbxproj and would
+   silently revert a version bumped only in Xcode.
+2. Run `xcodegen generate` and build to verify.
+3. Commit and push to `main`.
+4. Start the build: App Store Connect → Xcode Cloud → **Start Build**,
+   pick the workflow and branch `main`. (Pushes do not currently
+   trigger builds automatically — see below.)
+5. When the build finishes processing, submit it for review from
+   App Store Connect and update the "What's New" notes.
+
+### Making pushes trigger builds automatically (optional)
+
+App Store Connect → Xcode Cloud → **Manage Workflows** → open the
+workflow → **Start Conditions** → add a **Branch Changes** condition
+for `main`. Also confirm the Archive action delivers to TestFlight or
+App Store, otherwise the build goes nowhere.
+
 ## Use On Device
 
 1. Install the app on device.

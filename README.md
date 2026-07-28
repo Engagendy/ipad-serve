@@ -5,7 +5,15 @@ HTML Serve is a native app for running static HTML projects fully on device, off
 ## What It Supports
 
 - Import a whole folder from the system Files app
-- Store imported projects inside the app
+- Store imported projects inside the app, or link a folder in place
+  (security-scoped bookmark) so large projects aren't copied
+- Favorites, a default project that opens at launch, project rename,
+  search, and per-project resume of the last opened page
+- Home Screen quick actions, an "Open Project" Shortcuts action, and
+  `htmlserve://open?project=<name>` deep links
+- Optional classroom sharing: serve to other devices on the same Wi-Fi
+  with a scannable QR code per project (off by default; the server
+  binds to 127.0.0.1 unless enabled)
 - Detect and list `.html` / `.htm` pages
 - Serve local assets through an embedded HTTP server
 - Run pages in an embedded `WKWebView`

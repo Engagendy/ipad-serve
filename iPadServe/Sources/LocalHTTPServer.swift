@@ -6,6 +6,7 @@ final class LocalHTTPServer: ObservableObject {
     @Published private(set) var port: UInt16?
     @Published private(set) var isRunning = false
     @Published private(set) var isStarting = false
+    @Published private(set) var allowsLAN = false
 
     private var listener: NWListener?
     private let queue = DispatchQueue(label: "com.engagendy.HTMLServe.http")
@@ -24,9 +25,11 @@ final class LocalHTTPServer: ObservableObject {
 
         let parameters = NWParameters.tcp
         parameters.allowLocalEndpointReuse = true
-        // Only the on-device WKWebView should reach this server; never expose it
-        // to the Wi-Fi network (classrooms share networks).
-        parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: .ipv4(.loopback), port: .any)
+        // Bind to loopback unless the user explicitly enabled classroom
+        // sharing; classrooms share Wi-Fi networks.
+        if !allowsLAN {
+            parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: .ipv4(.loopback), port: .any)
+        }
         isStarting = true
 
         let listener: NWListener
@@ -79,6 +82,59 @@ final class LocalHTTPServer: ObservableObject {
     func restart() async throws {
         stop()
         try await start()
+        _ = await waitUntilReady()
+    }
+
+    /// Classroom sharing: rebinds the server to all interfaces so devices on
+    /// the same Wi-Fi can open project pages. Note the port changes on restart.
+    func setLANSharing(_ enabled: Bool) async {
+        guard allowsLAN != enabled else { return }
+        allowsLAN = enabled
+        try? await restart()
+    }
+
+    func lanURL(for project: ProjectItem, file: ProjectFile) -> URL? {
+        guard allowsLAN,
+              let url = url(for: project, file: file),
+              let address = Self.lanIPAddress(),
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+        components.host = address
+        return components.url
+    }
+
+    /// The device's IPv4 address on Wi-Fi (en0), for sharing with the classroom.
+    static func lanIPAddress() -> String? {
+        var ifaddrPointer: UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&ifaddrPointer) == 0, let firstAddr = ifaddrPointer else { return nil }
+        defer { freeifaddrs(ifaddrPointer) }
+
+        var fallback: String?
+        for pointer in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+            let interface = pointer.pointee
+            guard let addressPointer = interface.ifa_addr,
+                  addressPointer.pointee.sa_family == UInt8(AF_INET) else { continue }
+            let flags = Int32(interface.ifa_flags)
+            guard (flags & IFF_UP) != 0, (flags & IFF_LOOPBACK) == 0 else { continue }
+
+            var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+            guard getnameinfo(
+                addressPointer,
+                socklen_t(addressPointer.pointee.sa_len),
+                &host,
+                socklen_t(host.count),
+                nil,
+                0,
+                NI_NUMERICHOST
+            ) == 0 else { continue }
+
+            let address = String(cString: host)
+            let name = String(cString: interface.ifa_name)
+            if name == "en0" { return address }
+            if fallback == nil { fallback = address }
+        }
+        return fallback
     }
 
     func stop() {

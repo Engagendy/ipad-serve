@@ -4,12 +4,14 @@ struct ProjectItem: Identifiable, Hashable {
     let id: UUID
     let name: String
     let rootURL: URL
+    let isLinked: Bool
     let htmlFiles: [ProjectFile]
 
-    init(id: UUID, name: String, rootURL: URL) {
+    init(id: UUID, name: String, rootURL: URL, isLinked: Bool = false) {
         self.id = id
         self.name = name
         self.rootURL = rootURL
+        self.isLinked = isLinked
         self.htmlFiles = FileScanner.htmlFiles(in: rootURL)
     }
 

@@ -27,6 +27,7 @@
 		A2C368F7AC29AA5479756F1D /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7B25F8CF8342F52D44560B /* BrowserView.swift */; };
 		AFF9C1450F0CC482E2509114 /* LocalHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DCE1D5AC59587DEF80E3AC4 /* LocalHTTPServer.swift */; };
 		BFF97B4B6086FBB4915BE4ED /* MimeTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47853D42540B1D2B5E525451 /* MimeTypes.swift */; };
+		D990CD6623318525761D206D /* ClassroomShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DDB8D9E6F2C1F5837E34360 /* ClassroomShareView.swift */; };
 		ED210B8928FD9E108145570E /* styles.css in Resources */ = {isa = PBXBuildFile; fileRef = 8A6BAADAEFA2CA55FEF65823 /* styles.css */; };
 /* End PBXBuildFile section */
 
@@ -58,6 +59,7 @@
 		8A6BAADAEFA2CA55FEF65823 /* styles.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = styles.css; sourceTree = "<group>"; };
 		8A7B25F8CF8342F52D44560B /* BrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserView.swift; sourceTree = "<group>"; };
 		8DCE1D5AC59587DEF80E3AC4 /* LocalHTTPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalHTTPServer.swift; sourceTree = "<group>"; };
+		8DDB8D9E6F2C1F5837E34360 /* ClassroomShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassroomShareView.swift; sourceTree = "<group>"; };
 		90B1C70DD2DFFD8C51C4BC69 /* 01-projects.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "01-projects.png"; sourceTree = "<group>"; };
 		9D0F1C222A846C53C86FCE13 /* 03-running-guide.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "03-running-guide.png"; sourceTree = "<group>"; };
 		AFC14146FA3C6AFF2BA44B5A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -105,6 +107,7 @@
 			children = (
 				72429EEEAC586CE60C0DD11D /* AppShortcuts.swift */,
 				8A7B25F8CF8342F52D44560B /* BrowserView.swift */,
+				8DDB8D9E6F2C1F5837E34360 /* ClassroomShareView.swift */,
 				0AD34D1FFD46B276982828FB /* ContentView.swift */,
 				22E916A31E3576EEFF876E75 /* FileScanner.swift */,
 				CAD6E51FB0E5E37242168B5B /* iPadServeApp.swift */,
@@ -267,6 +270,7 @@
 			files = (
 				21830ED03D0CEFF08D16525E /* AppShortcuts.swift in Sources */,
 				A2C368F7AC29AA5479756F1D /* BrowserView.swift in Sources */,
+				D990CD6623318525761D206D /* ClassroomShareView.swift in Sources */,
 				69BD26AD54B7F2CE936F3DF2 /* ContentView.swift in Sources */,
 				00655769839F5784B3884BDC /* FileScanner.swift in Sources */,
 				6A956D0A0AC1232443987243 /* LaunchRouter.swift in Sources */,
@@ -324,7 +328,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 7JM77223V5;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -422,7 +426,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 7JM77223V5;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;

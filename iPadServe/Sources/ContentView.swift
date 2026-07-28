@@ -8,6 +8,10 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedProject: ProjectItem?
     @State private var isImporting = false
+    @State private var importAsLink = false
+    @State private var renameTarget: ProjectItem?
+    @State private var renameText = ""
+    @State private var shareTarget: ProjectItem?
     @State private var autoRunProjectID: UUID?
     @State private var hasAppliedLaunchDefault = false
     @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
@@ -31,12 +35,33 @@ struct ContentView: View {
             .navigationTitle("Projects")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isImporting = true
+                    Menu {
+                        Button {
+                            importAsLink = false
+                            isImporting = true
+                        } label: {
+                            Label("Copy Folder into App", systemImage: "folder.badge.plus")
+                        }
+                        Button {
+                            importAsLink = true
+                            isImporting = true
+                        } label: {
+                            Label("Link Folder in Place", systemImage: "link.badge.plus")
+                        }
+                        Divider()
+                        Toggle(isOn: Binding(
+                            get: { server.allowsLAN },
+                            set: { enabled in Task { await server.setLANSharing(enabled) } }
+                        )) {
+                            Label("Share on Local Network", systemImage: "wifi")
+                        }
                     } label: {
                         Label("Import Folder", systemImage: "folder.badge.plus")
                     }
                 }
+            }
+            .refreshable {
+                store.loadProjects()
             }
             .overlay {
                 if store.projects.isEmpty {
@@ -69,7 +94,11 @@ struct ContentView: View {
             allowsMultipleSelection: false
         ) { result in
             guard case let .success(urls) = result, let url = urls.first else { return }
-            store.importFolder(from: url)
+            if importAsLink {
+                store.linkFolder(from: url)
+            } else {
+                store.importFolder(from: url)
+            }
         }
         .confirmationDialog(
             Text("A project named \"\(store.pendingImport?.name ?? "")\" already exists."),
@@ -100,8 +129,13 @@ struct ContentView: View {
             Text(store.importError ?? "The folder could not be imported.")
         }
         .overlay(alignment: .bottom) {
-            ServerStatusView(isRunning: server.isRunning, isStarting: server.isStarting, port: server.port)
-                .padding()
+            ServerStatusView(
+                isRunning: server.isRunning,
+                isStarting: server.isStarting,
+                port: server.port,
+                lanAddress: server.allowsLAN ? LocalHTTPServer.lanIPAddress() : nil
+            )
+            .padding()
         }
         .task {
             try? await server.ensureRunning()
@@ -137,6 +171,27 @@ struct ContentView: View {
         }
         .onChange(of: router.pendingProjectName) { _, _ in
             _ = applyPendingRoute()
+        }
+        .alert("Rename Project", isPresented: Binding(
+            get: { renameTarget != nil },
+            set: { if !$0 { renameTarget = nil } }
+        )) {
+            TextField("Name", text: $renameText)
+            Button("Rename") {
+                if let target = renameTarget {
+                    store.rename(target, to: renameText)
+                }
+                renameTarget = nil
+            }
+            Button("Cancel", role: .cancel) {
+                renameTarget = nil
+            }
+        }
+        .sheet(item: $shareTarget) { project in
+            ClassroomShareView(
+                projectName: project.name,
+                url: store.entryPage(for: project).flatMap { server.lanURL(for: project, file: $0) }
+            )
         }
     }
 
@@ -191,6 +246,21 @@ struct ContentView: View {
                         systemImage: store.isDefault(project) ? "bolt.slash" : "bolt"
                     )
                 }
+                if !project.isLinked {
+                    Button {
+                        renameText = project.name
+                        renameTarget = project
+                    } label: {
+                        Label("Rename", systemImage: "pencil")
+                    }
+                }
+                if server.allowsLAN {
+                    Button {
+                        shareTarget = project
+                    } label: {
+                        Label("Classroom QR Code", systemImage: "qrcode")
+                    }
+                }
                 Divider()
                 Button(role: .destructive) {
                     store.delete(project)
@@ -235,6 +305,12 @@ private struct ProjectRow: View {
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 0)
+            if project.isLinked {
+                Image(systemName: "link")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("Linked folder")
+            }
             if isDefault {
                 Image(systemName: "bolt.fill")
                     .font(.caption)
@@ -256,6 +332,7 @@ private struct ServerStatusView: View {
     let isRunning: Bool
     let isStarting: Bool
     let port: UInt16?
+    var lanAddress: String?
 
     var body: some View {
         HStack(spacing: 8) {
@@ -284,6 +361,9 @@ private struct ServerStatusView: View {
 
     private var statusText: String {
         if isRunning {
+            if let lanAddress {
+                return String(localized: "Sharing with the classroom on http://\(lanAddress):\(port.map(String.init) ?? "-")")
+            }
             return String(localized: "Local server running on 127.0.0.1:\(port.map(String.init) ?? "-")")
         }
 

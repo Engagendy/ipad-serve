@@ -21,6 +21,8 @@ final class ProjectStore: ObservableObject {
     private let favoritesKey = "favoriteProjectNames"
     private let defaultProjectKey = "defaultProjectName"
     private let lastOpenedPagesKey = "lastOpenedPages"
+    private let linkedBookmarksKey = "linkedProjectBookmarks"
+    private var accessedLinkedURLs: [String: URL] = [:]
     private let bundledSampleName = "HTML Serve Guide"
     private let bundledSampleInstallKey = "didInstallBundledSampleProject.v5"
     private let bundledSampleFiles = [
@@ -51,13 +53,120 @@ final class ProjectStore: ObservableObject {
             options: [.skipsHiddenFiles]
         )) ?? []
 
-        projects = folders.compactMap { url in
+        let copiedProjects = folders.compactMap { url -> ProjectItem? in
             guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else { return nil }
             return ProjectItem(id: stableID(for: url), name: url.lastPathComponent, rootURL: url)
         }
-        .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+
+        projects = (copiedProjects + linkedProjects())
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
 
         updateHomeScreenQuickActions()
+    }
+
+    private func linkedBookmarks() -> [String: Data] {
+        (UserDefaults.standard.dictionary(forKey: linkedBookmarksKey) as? [String: Data]) ?? [:]
+    }
+
+    private func linkedProjects() -> [ProjectItem] {
+        var bookmarks = linkedBookmarks()
+        var didUpdateBookmarks = false
+
+        let items = bookmarks.compactMap { name, bookmark -> ProjectItem? in
+            var isStale = false
+            guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale) else {
+                return nil
+            }
+
+            if accessedLinkedURLs[name] == nil, url.startAccessingSecurityScopedResource() {
+                accessedLinkedURLs[name] = url
+            }
+
+            if isStale, let fresh = try? url.bookmarkData() {
+                bookmarks[name] = fresh
+                didUpdateBookmarks = true
+            }
+
+            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else { return nil }
+            return ProjectItem(id: stableID(for: url), name: name, rootURL: url, isLinked: true)
+        }
+
+        if didUpdateBookmarks {
+            UserDefaults.standard.set(bookmarks, forKey: linkedBookmarksKey)
+        }
+
+        return items
+    }
+
+    /// Links a folder in place with a security-scoped bookmark instead of
+    /// copying it into the app, so large books don't use storage twice.
+    func linkFolder(from sourceURL: URL) {
+        importError = nil
+        guard sourceURL.startAccessingSecurityScopedResource() else {
+            importError = String(localized: "The folder could not be imported.")
+            return
+        }
+
+        let rawName = sourceURL.deletingPathExtension().lastPathComponent
+        let name = rawName.isEmpty ? "Project" : rawName
+
+        guard !projects.contains(where: { $0.name == name }) else {
+            sourceURL.stopAccessingSecurityScopedResource()
+            importError = String(localized: "A project named \"\(name)\" already exists.")
+            return
+        }
+
+        do {
+            let bookmark = try sourceURL.bookmarkData()
+            var bookmarks = linkedBookmarks()
+            bookmarks[name] = bookmark
+            UserDefaults.standard.set(bookmarks, forKey: linkedBookmarksKey)
+            accessedLinkedURLs[name] = sourceURL
+            loadProjects()
+        } catch {
+            sourceURL.stopAccessingSecurityScopedResource()
+            importError = error.localizedDescription
+        }
+    }
+
+    func rename(_ project: ProjectItem, to rawNewName: String) {
+        importError = nil
+        let newName = rawNewName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !newName.isEmpty, newName != project.name, !project.isLinked else { return }
+
+        guard !newName.contains("/"), !newName.hasPrefix(".") else {
+            importError = String(localized: "This name cannot be used.")
+            return
+        }
+
+        guard !projects.contains(where: { $0.name == newName }) else {
+            importError = String(localized: "A project named \"\(newName)\" already exists.")
+            return
+        }
+
+        do {
+            let destination = projectsDirectory.appendingPathComponent(newName, isDirectory: true)
+            try fileManager.moveItem(at: project.rootURL, to: destination)
+            migratePreferences(from: project.name, to: newName)
+            loadProjects()
+        } catch {
+            importError = error.localizedDescription
+        }
+    }
+
+    private func migratePreferences(from oldName: String, to newName: String) {
+        if favoriteNames.remove(oldName) != nil {
+            favoriteNames.insert(newName)
+            UserDefaults.standard.set(Array(favoriteNames).sorted(), forKey: favoritesKey)
+        }
+        if defaultProjectName == oldName {
+            defaultProjectName = newName
+            UserDefaults.standard.set(newName, forKey: defaultProjectKey)
+        }
+        if let page = lastOpenedPages.removeValue(forKey: oldName) {
+            lastOpenedPages[newName] = page
+            UserDefaults.standard.set(lastOpenedPages, forKey: lastOpenedPagesKey)
+        }
     }
 
     var favoriteProjects: [ProjectItem] {
@@ -149,6 +258,12 @@ final class ProjectStore: ObservableObject {
             let staging = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
             try copyDirectory(from: sourceURL, to: staging)
 
+            if projects.first(where: { $0.name == name })?.isLinked == true {
+                try? fileManager.removeItem(at: staging)
+                importError = String(localized: "A project named \"\(name)\" already exists.")
+                return
+            }
+
             let destination = projectsDirectory.appendingPathComponent(name, isDirectory: true)
             if fileManager.fileExists(atPath: destination.path) {
                 pendingImport = PendingImport(stagedURL: staging, name: name)
@@ -190,7 +305,16 @@ final class ProjectStore: ObservableObject {
 
     func delete(_ project: ProjectItem) {
         do {
-            try fileManager.removeItem(at: project.rootURL)
+            if project.isLinked {
+                var bookmarks = linkedBookmarks()
+                bookmarks.removeValue(forKey: project.name)
+                UserDefaults.standard.set(bookmarks, forKey: linkedBookmarksKey)
+                if let url = accessedLinkedURLs.removeValue(forKey: project.name) {
+                    url.stopAccessingSecurityScopedResource()
+                }
+            } else {
+                try fileManager.removeItem(at: project.rootURL)
+            }
             if favoriteNames.contains(project.name) {
                 favoriteNames.remove(project.name)
                 UserDefaults.standard.set(Array(favoriteNames).sorted(), forKey: favoritesKey)

@@ -10,23 +10,38 @@
 - Encryption: None of the algorithms mentioned / no non-exempt encryption
 - Price: Free
 - Platform: Tablet
-- Version: 1.0.0
-- Build: 1
+- Version: 1.1.0
+- Build: 8
 - Support URL: https://github.com/Engagendy/ipad-serve/issues
 - Marketing URL: https://github.com/Engagendy/ipad-serve
 - Privacy Policy URL: https://github.com/Engagendy/ipad-serve/blob/main/PRIVACY.md
 
 ## Promotional Text
 
-Import static HTML project folders and run them locally with offline previews for pages, assets, PDFs, and video.
+Run interactive HTML projects fully offline. New: favorites, open a project at launch, Home Screen shortcuts, Wi-Fi sharing with QR codes, and Turkish support.
+
+## What's New in 1.1.0
+
+This update is packed with features requested by teachers and presenters:
+
+- Favorites: star your most-used projects for quick access
+- Open at Launch: pick a project that starts automatically when the app opens
+- Resume: Run now returns to the last page you viewed in each project
+- Home button in the browser toolbar to jump straight back to your projects
+- Home Screen shortcuts: long-press the app icon to open a favorite, or add a project to your Home Screen with the Shortcuts app
+- Link Folder in Place: use large projects without copying them into the app
+- Share on Local Network: people on the same Wi-Fi can scan a QR code to open your project on their own devices (off by default)
+- Rename projects, search your library, and pull to refresh
+- Keyboard shortcuts, faster page loads, and lower memory use for large files
+- Full Turkish localization
+
+## Keywords
+
+html,local server,ipad,web preview,static site,files,offline,developer,classroom,qr
 
 ## Subtitle
 
 Local HTML project runner
-
-## Keywords
-
-html,local server,ipad,web preview,static site,files,offline,developer
 
 ## Description
 
@@ -44,6 +59,13 @@ Key features:
 - Preview common assets including images, PDFs, `.mov`, `.mp4`, and other files
 - Use fullscreen mode for presentation and review
 - Work offline after importing a project
+- Mark projects as favorites and open a default project at launch
+- Resume the last page you viewed in each project
+- Open projects from Home Screen quick actions, the Shortcuts app, or htmlserve:// links
+- Link folders in place instead of copying them to save storage
+- Optionally share a project over local Wi-Fi with a scannable QR code
+- Rename projects, search your library, and use keyboard shortcuts
+- Available in English and Turkish
 
 HTML Serve is built for users who need to review static HTML deliverables, prototypes, reports, dashboards, and local web projects directly on device without an external server.
 
@@ -77,6 +99,10 @@ HTML Serve only accesses folders selected by the user through the Files picker. 
 External services:
 
 None are required by the app. Static project files are served locally on device. Imported HTML content may reference external scripts, fonts, or links; those references belong to the imported project.
+
+Local network usage:
+
+The embedded server binds to 127.0.0.1 only. If the user explicitly enables "Share on Local Network", the server accepts connections from devices on the same Wi-Fi so they can view the user's own project; this is why the app declares NSLocalNetworkUsageDescription. Sharing is off by default, is clearly indicated in the UI, and serves only folders the user imported. No data leaves the local network and nothing is collected.
 
 Regional differences:
 

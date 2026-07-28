@@ -5,7 +5,7 @@ options:
     iOS: "17.0"
 settings:
   MARKETING_VERSION: 1.1.0
-  CURRENT_PROJECT_VERSION: 3
+  CURRENT_PROJECT_VERSION: 4
   DEVELOPMENT_TEAM: 7JM77223V5
 targets:
   iPadServe:
@@ -15,6 +15,8 @@ targets:
       - path: iPadServe
     resources:
       - path: iPadServe/Resources/Assets.xcassets
+      - path: iPadServe/Resources/PrivacyInfo.xcprivacy
+      - path: iPadServe/Resources/Localizable.xcstrings
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.engagendy.iPadServe
@@ -46,7 +48,6 @@ targets:
             CFBundleURLSchemes:
               - htmlserve
         NSAppTransportSecurity:
-          NSAllowsArbitraryLoads: true
           NSAllowsArbitraryLoadsInWebContent: true
           NSAllowsLocalNetworking: true
   iPadServeUITests:

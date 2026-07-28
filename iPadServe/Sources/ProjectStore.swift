@@ -1,17 +1,26 @@
+import CryptoKit
 import Foundation
 import UIKit
 import UniformTypeIdentifiers
+
+struct PendingImport {
+    let stagedURL: URL
+    let name: String
+}
 
 @MainActor
 final class ProjectStore: ObservableObject {
     @Published private(set) var projects: [ProjectItem] = []
     @Published private(set) var favoriteNames: Set<String> = []
     @Published private(set) var defaultProjectName: String?
+    @Published private(set) var lastOpenedPages: [String: String] = [:]
     @Published var importError: String?
+    @Published var pendingImport: PendingImport?
 
     private let fileManager = FileManager.default
     private let favoritesKey = "favoriteProjectNames"
     private let defaultProjectKey = "defaultProjectName"
+    private let lastOpenedPagesKey = "lastOpenedPages"
     private let bundledSampleName = "HTML Serve Guide"
     private let bundledSampleInstallKey = "didInstallBundledSampleProject.v5"
     private let bundledSampleFiles = [
@@ -34,6 +43,7 @@ final class ProjectStore: ObservableObject {
 
         favoriteNames = Set(UserDefaults.standard.stringArray(forKey: favoritesKey) ?? [])
         defaultProjectName = UserDefaults.standard.string(forKey: defaultProjectKey)
+        lastOpenedPages = (UserDefaults.standard.dictionary(forKey: lastOpenedPagesKey) as? [String: String]) ?? [:]
 
         let folders = (try? fileManager.contentsOfDirectory(
             at: projectsDirectory,
@@ -81,6 +91,23 @@ final class ProjectStore: ObservableObject {
         updateHomeScreenQuickActions()
     }
 
+    /// The page to open when running a project: the last page the user viewed,
+    /// falling back to index.html / the first HTML page.
+    func entryPage(for project: ProjectItem) -> ProjectFile? {
+        if let relativePath = lastOpenedPages[project.name],
+           let file = project.htmlFiles.first(where: { $0.relativePath == relativePath }) {
+            return file
+        }
+        return project.preferredEntry
+    }
+
+    func recordLastOpened(_ file: ProjectFile, in project: ProjectItem) {
+        let ext = file.url.pathExtension.lowercased()
+        guard ext == "html" || ext == "htm" else { return }
+        lastOpenedPages[project.name] = file.relativePath
+        UserDefaults.standard.set(lastOpenedPages, forKey: lastOpenedPagesKey)
+    }
+
     func isDefault(_ project: ProjectItem) -> Bool {
         project.name == defaultProjectName
     }
@@ -96,7 +123,7 @@ final class ProjectStore: ObservableObject {
             UIApplicationShortcutItem(
                 type: LaunchRouter.quickActionType,
                 localizedTitle: project.name,
-                localizedSubtitle: "Open project",
+                localizedSubtitle: String(localized: "Open project"),
                 icon: UIApplicationShortcutIcon(systemImageName: "play.rectangle"),
                 userInfo: [LaunchRouter.quickActionProjectKey: project.name as NSString]
             )
@@ -115,12 +142,50 @@ final class ProjectStore: ObservableObject {
 
         do {
             try fileManager.createDirectory(at: projectsDirectory, withIntermediateDirectories: true)
-            let destination = uniqueDestination(for: sourceURL.deletingPathExtension().lastPathComponent)
-            try copyDirectory(from: sourceURL, to: destination)
+            let rawName = sourceURL.deletingPathExtension().lastPathComponent
+            let name = rawName.isEmpty ? "Project" : rawName
+            // Copy into a staging folder first so a name collision can be
+            // resolved (replace/keep both) without touching the existing project.
+            let staging = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            try copyDirectory(from: sourceURL, to: staging)
+
+            let destination = projectsDirectory.appendingPathComponent(name, isDirectory: true)
+            if fileManager.fileExists(atPath: destination.path) {
+                pendingImport = PendingImport(stagedURL: staging, name: name)
+            } else {
+                try fileManager.moveItem(at: staging, to: destination)
+                loadProjects()
+            }
+        } catch {
+            importError = error.localizedDescription
+        }
+    }
+
+    func resolvePendingImport(replacing: Bool) {
+        guard let pending = pendingImport else { return }
+        pendingImport = nil
+
+        do {
+            let destination: URL
+            if replacing {
+                destination = projectsDirectory.appendingPathComponent(pending.name, isDirectory: true)
+                if fileManager.fileExists(atPath: destination.path) {
+                    try fileManager.removeItem(at: destination)
+                }
+            } else {
+                destination = uniqueDestination(for: pending.name)
+            }
+            try fileManager.moveItem(at: pending.stagedURL, to: destination)
             loadProjects()
         } catch {
             importError = error.localizedDescription
         }
+    }
+
+    func cancelPendingImport() {
+        guard let pending = pendingImport else { return }
+        pendingImport = nil
+        try? fileManager.removeItem(at: pending.stagedURL)
     }
 
     func delete(_ project: ProjectItem) {
@@ -132,6 +197,9 @@ final class ProjectStore: ObservableObject {
             }
             if defaultProjectName == project.name {
                 setDefault(nil)
+            }
+            if lastOpenedPages.removeValue(forKey: project.name) != nil {
+                UserDefaults.standard.set(lastOpenedPages, forKey: lastOpenedPagesKey)
             }
             loadProjects()
         } catch {
@@ -203,6 +271,13 @@ final class ProjectStore: ObservableObject {
     }
 
     private func stableID(for url: URL) -> UUID {
-        UUID(uuidString: "00000000-0000-0000-0000-\(String(abs(url.path.hashValue)).prefix(12))") ?? UUID()
+        let digest = SHA256.hash(data: Data(url.standardizedFileURL.path.utf8))
+        let bytes = Array(digest.prefix(16))
+        return UUID(uuid: (
+            bytes[0], bytes[1], bytes[2], bytes[3],
+            bytes[4], bytes[5], bytes[6], bytes[7],
+            bytes[8], bytes[9], bytes[10], bytes[11],
+            bytes[12], bytes[13], bytes[14], bytes[15]
+        ))
     }
 }

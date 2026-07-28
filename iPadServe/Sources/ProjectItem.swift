@@ -4,9 +4,13 @@ struct ProjectItem: Identifiable, Hashable {
     let id: UUID
     let name: String
     let rootURL: URL
+    let htmlFiles: [ProjectFile]
 
-    var htmlFiles: [ProjectFile] {
-        FileScanner.htmlFiles(in: rootURL)
+    init(id: UUID, name: String, rootURL: URL) {
+        self.id = id
+        self.name = name
+        self.rootURL = rootURL
+        self.htmlFiles = FileScanner.htmlFiles(in: rootURL)
     }
 
     var rootBrowserItems: [ProjectBrowserItem] {
@@ -15,6 +19,16 @@ struct ProjectItem: Identifiable, Hashable {
 
     var preferredEntry: ProjectFile? {
         htmlFiles.first { $0.relativePath.lowercased() == "index.html" } ?? htmlFiles.first
+    }
+
+    static func == (lhs: ProjectItem, rhs: ProjectItem) -> Bool {
+        lhs.id == rhs.id && lhs.name == rhs.name && lhs.rootURL == rhs.rootURL
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(name)
+        hasher.combine(rootURL)
     }
 }
 

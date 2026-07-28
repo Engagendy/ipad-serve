@@ -1,0 +1,446 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%lld HTML pages" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld HTML sayfası"
+          }
+        }
+      }
+    },
+    "%lld items" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld öğe"
+          }
+        }
+      }
+    },
+    "A project named \"%@\" already exists." : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "\"%@\" adında bir proje zaten var."
+          }
+        }
+      }
+    },
+    "Add to Favorites" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favorilere Ekle"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geri"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İptal"
+          }
+        }
+      }
+    },
+    "Could Not Open Page" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sayfa Açılamadı"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sil"
+          }
+        }
+      }
+    },
+    "Don't Open at Launch" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Açılışta Açma"
+          }
+        }
+      }
+    },
+    "Exit Full Screen" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tam Ekrandan Çık"
+          }
+        }
+      }
+    },
+    "Favorite" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favori"
+          }
+        }
+      }
+    },
+    "Favorites" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favoriler"
+          }
+        }
+      }
+    },
+    "Files" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosyalar"
+          }
+        }
+      }
+    },
+    "Forward" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İleri"
+          }
+        }
+      }
+    },
+    "Full Screen" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tam Ekran"
+          }
+        }
+      }
+    },
+    "Home" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ana Sayfa"
+          }
+        }
+      }
+    },
+    "Import a folder that contains HTML files." : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTML dosyaları içeren bir klasörü içe aktarın."
+          }
+        }
+      }
+    },
+    "Import Failed" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İçe Aktarma Başarısız"
+          }
+        }
+      }
+    },
+    "Import Folder" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klasör İçe Aktar"
+          }
+        }
+      }
+    },
+    "Keep Both" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İkisini de Tut"
+          }
+        }
+      }
+    },
+    "Local server running on 127.0.0.1:%@" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yerel sunucu 127.0.0.1:%@ üzerinde çalışıyor"
+          }
+        }
+      }
+    },
+    "No Files" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dosya Yok"
+          }
+        }
+      }
+    },
+    "No Projects" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proje Yok"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tamam"
+          }
+        }
+      }
+    },
+    "Open at Launch" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Açılışta Aç"
+          }
+        }
+      }
+    },
+    "Open project" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projeyi aç"
+          }
+        }
+      }
+    },
+    "Opens at launch" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Açılışta açılır"
+          }
+        }
+      }
+    },
+    "Page Could Not Load" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sayfa Yüklenemedi"
+          }
+        }
+      }
+    },
+    "Projects" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projeler"
+          }
+        }
+      }
+    },
+    "Reload" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yenile"
+          }
+        }
+      }
+    },
+    "Remove from Favorites" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favorilerden Çıkar"
+          }
+        }
+      }
+    },
+    "Replace" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Değiştir"
+          }
+        }
+      }
+    },
+    "Replacing updates the project with the new files and keeps its favorite and launch settings." : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Değiştirme, projeyi yeni dosyalarla günceller; favori ve açılış ayarları korunur."
+          }
+        }
+      }
+    },
+    "Run" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çalıştır"
+          }
+        }
+      }
+    },
+    "Search projects" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projelerde ara"
+          }
+        }
+      }
+    },
+    "Select a Project" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir Proje Seçin"
+          }
+        }
+      }
+    },
+    "Server stopped" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sunucu durduruldu"
+          }
+        }
+      }
+    },
+    "Starting local server..." : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yerel sunucu başlatılıyor..."
+          }
+        }
+      }
+    },
+    "The folder could not be imported." : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klasör içe aktarılamadı."
+          }
+        }
+      }
+    },
+    "The local server could not open this file." : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yerel sunucu bu dosyayı açamadı."
+          }
+        }
+      }
+    },
+    "The local server could not start. %@" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yerel sunucu başlatılamadı. %@"
+          }
+        }
+      }
+    },
+    "The local server is not ready yet. Try opening the page again." : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yerel sunucu henüz hazır değil. Sayfayı tekrar açmayı deneyin."
+          }
+        }
+      }
+    },
+    "This folder imported successfully, but no files were found." : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu klasör başarıyla içe aktarıldı ancak dosya bulunamadı."
+          }
+        }
+      }
+    },
+    "Unfavorite" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Favoriden Çıkar"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

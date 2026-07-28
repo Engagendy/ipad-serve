@@ -2,12 +2,15 @@ import SwiftUI
 
 struct ProjectDetailView: View {
     @EnvironmentObject private var server: LocalHTTPServer
+    @EnvironmentObject private var store: ProjectStore
     let project: ProjectItem
     var autoRun = false
     var onAutoRunConsumed: () -> Void = {}
     var goHome: () -> Void = {}
     @State private var selectedPage: BrowserPage?
     @State private var openError: String?
+    @State private var browserItems: [ProjectBrowserItem] = []
+    @State private var hasLoadedItems = false
 
     var body: some View {
         Group {
@@ -23,7 +26,7 @@ struct ProjectDetailView: View {
             } else {
                 List {
                     Section {
-                        OutlineGroup(project.rootBrowserItems, children: \.outlineChildren) { item in
+                        OutlineGroup(browserItems, children: \.outlineChildren) { item in
                             ProjectBrowserRow(item: item) {
                                 Task { await open(item) }
                             }
@@ -36,17 +39,18 @@ struct ProjectDetailView: View {
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
-                            if let entry = project.preferredEntry {
+                            if let entry = store.entryPage(for: project) {
                                 Task { await open(entry) }
                             }
                         } label: {
                             Label("Run", systemImage: "play.fill")
                         }
+                        .keyboardShortcut(.return, modifiers: .command)
                         .disabled(project.preferredEntry == nil)
                     }
                 }
                 .overlay {
-                    if project.rootBrowserItems.isEmpty {
+                    if hasLoadedItems, browserItems.isEmpty {
                         ContentUnavailableView(
                             "No Files",
                             systemImage: "folder.badge.questionmark",
@@ -57,10 +61,14 @@ struct ProjectDetailView: View {
             }
         }
         .task(id: autoRun) {
+            if !hasLoadedItems {
+                browserItems = project.rootBrowserItems
+                hasLoadedItems = true
+            }
             try? await server.ensureRunning()
             if autoRun {
                 onAutoRunConsumed()
-                if let entry = project.preferredEntry {
+                if let entry = store.entryPage(for: project) {
                     await open(entry)
                 }
             }
@@ -79,15 +87,16 @@ struct ProjectDetailView: View {
         do {
             try await server.ensureRunning()
         } catch {
-            openError = "The local server could not start. \(error.localizedDescription)"
+            openError = String(localized: "The local server could not start. \(error.localizedDescription)")
             return
         }
 
         guard let url = await serverURL(for: file) else {
-            openError = "The local server is not ready yet. Try opening the page again."
+            openError = String(localized: "The local server is not ready yet. Try opening the page again.")
             return
         }
 
+        store.recordLastOpened(file, in: project)
         selectedPage = BrowserPage(title: file.name, url: url)
     }
 

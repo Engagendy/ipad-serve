@@ -11,19 +11,23 @@ struct ContentView: View {
     @State private var autoRunProjectID: UUID?
     @State private var hasAppliedLaunchDefault = false
     @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
+    @State private var searchText = ""
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             List(selection: $selectedProject) {
-                if !store.favoriteProjects.isEmpty {
+                let favorites = filtered(store.favoriteProjects)
+                let others = filtered(store.otherProjects)
+                if !favorites.isEmpty {
                     Section("Favorites") {
-                        projectRows(store.favoriteProjects)
+                        projectRows(favorites)
                     }
                 }
-                Section(store.favoriteProjects.isEmpty ? "" : "Projects") {
-                    projectRows(store.otherProjects)
+                Section(favorites.isEmpty ? "" : "Projects") {
+                    projectRows(others)
                 }
             }
+            .searchable(text: $searchText, prompt: "Search projects")
             .navigationTitle("Projects")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -66,6 +70,26 @@ struct ContentView: View {
         ) { result in
             guard case let .success(urls) = result, let url = urls.first else { return }
             store.importFolder(from: url)
+        }
+        .confirmationDialog(
+            Text("A project named \"\(store.pendingImport?.name ?? "")\" already exists."),
+            isPresented: Binding(
+                get: { store.pendingImport != nil },
+                set: { if !$0 { store.cancelPendingImport() } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Replace", role: .destructive) {
+                store.resolvePendingImport(replacing: true)
+            }
+            Button("Keep Both") {
+                store.resolvePendingImport(replacing: false)
+            }
+            Button("Cancel", role: .cancel) {
+                store.cancelPendingImport()
+            }
+        } message: {
+            Text("Replacing updates the project with the new files and keeps its favorite and launch settings.")
         }
         .alert("Import Failed", isPresented: Binding(
             get: { store.importError != nil },
@@ -114,6 +138,12 @@ struct ContentView: View {
         .onChange(of: router.pendingProjectName) { _, _ in
             _ = applyPendingRoute()
         }
+    }
+
+    private func filtered(_ projects: [ProjectItem]) -> [ProjectItem] {
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return projects }
+        return projects.filter { $0.name.localizedCaseInsensitiveContains(query) }
     }
 
     @ViewBuilder
@@ -254,9 +284,11 @@ private struct ServerStatusView: View {
 
     private var statusText: String {
         if isRunning {
-            return "Local server running on 127.0.0.1:\(port.map(String.init) ?? "-")"
+            return String(localized: "Local server running on 127.0.0.1:\(port.map(String.init) ?? "-")")
         }
 
-        return isStarting ? "Starting local server..." : "Server stopped"
+        return isStarting
+            ? String(localized: "Starting local server...")
+            : String(localized: "Server stopped")
     }
 }

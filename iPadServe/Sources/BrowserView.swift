@@ -53,7 +53,9 @@ private struct BrowserToolbar: View {
     var body: some View {
         HStack(spacing: 8) {
             BrowserIconButton("Home", systemImage: "house", action: goHome)
+                .keyboardShortcut("h", modifiers: [.command, .shift])
             BrowserIconButton("Files", systemImage: "folder", action: close)
+                .keyboardShortcut("l", modifiers: [.command, .shift])
 
             Divider()
                 .frame(height: 18)
@@ -61,20 +63,24 @@ private struct BrowserToolbar: View {
             BrowserIconButton("Back", systemImage: "chevron.left") {
                 state.webView?.goBack()
             }
+            .keyboardShortcut("[", modifiers: .command)
             .disabled(!state.canGoBack)
 
             BrowserIconButton("Forward", systemImage: "chevron.right") {
                 state.webView?.goForward()
             }
+            .keyboardShortcut("]", modifiers: .command)
             .disabled(!state.canGoForward)
 
             BrowserIconButton("Reload", systemImage: "arrow.clockwise") {
                 state.webView?.reload()
             }
+            .keyboardShortcut("r", modifiers: .command)
 
             BrowserIconButton("Full Screen", systemImage: "arrow.up.left.and.arrow.down.right") {
                 isFullScreen = true
             }
+            .keyboardShortcut("f", modifiers: [.command, .shift])
 
             Spacer(minLength: 0)
 
@@ -131,6 +137,7 @@ private struct FullScreenExitButton: View {
                     .contentShape(Circle())
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.escape, modifiers: [])
             .accessibilityLabel("Exit Full Screen")
             .padding(8)
         }

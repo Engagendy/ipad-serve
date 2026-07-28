@@ -24,6 +24,9 @@ final class LocalHTTPServer: ObservableObject {
 
         let parameters = NWParameters.tcp
         parameters.allowLocalEndpointReuse = true
+        // Only the on-device WKWebView should reach this server; never expose it
+        // to the Wi-Fi network (classrooms share networks).
+        parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: .ipv4(.loopback), port: .any)
         isStarting = true
 
         let listener: NWListener
@@ -92,7 +95,7 @@ final class LocalHTTPServer: ObservableObject {
         let encodedFile = file.relativePath.split(separator: "/").map {
             String($0).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? String($0)
         }.joined(separator: "/")
-        return URL(string: "http://localhost:\(port)/file/\(encodedRoot)/\(encodedFile)")
+        return URL(string: "http://127.0.0.1:\(port)/file/\(encodedRoot)/\(encodedFile)")
     }
 
     private nonisolated func handle(_ connection: NWConnection) {
@@ -116,6 +119,10 @@ final class LocalHTTPServer: ObservableObject {
         return isRunning && port != nil && listener != nil
     }
 
+    private nonisolated static let maxRequestHeaderBytes = 256 * 1024
+    private nonisolated static let streamingThreshold: UInt64 = 8 * 1024 * 1024
+    private nonisolated static let streamingChunkSize = 1024 * 1024
+
     private nonisolated func receive(on connection: NWConnection, buffer: Data) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 64 * 1024) { [weak self] data, _, isComplete, error in
             guard let self else { return }
@@ -124,8 +131,15 @@ final class LocalHTTPServer: ObservableObject {
                 var nextBuffer = buffer
                 nextBuffer.append(data)
 
-                if nextBuffer.range(of: Data("\r\n\r\n".utf8)) != nil {
-                    self.respond(to: nextBuffer, on: connection)
+                if let headerEnd = nextBuffer.range(of: Data("\r\n\r\n".utf8)) {
+                    let headerData = nextBuffer.subdata(in: nextBuffer.startIndex..<headerEnd.upperBound)
+                    let remainder = nextBuffer.subdata(in: headerEnd.upperBound..<nextBuffer.endIndex)
+                    self.respond(to: headerData, remainder: remainder, on: connection)
+                    return
+                }
+
+                guard nextBuffer.count <= Self.maxRequestHeaderBytes else {
+                    self.send(status: 400, headers: [:], body: Data("Bad Request".utf8), on: connection, keepAlive: false, remainder: Data())
                     return
                 }
 
@@ -139,24 +153,26 @@ final class LocalHTTPServer: ObservableObject {
         }
     }
 
-    private nonisolated func respond(to requestData: Data, on connection: NWConnection) {
+    private nonisolated func respond(to requestData: Data, remainder: Data, on connection: NWConnection) {
         guard let rawRequest = String(data: requestData, encoding: .utf8),
               let request = HTTPRequest(rawRequest: rawRequest) else {
-            send(status: 400, headers: [:], body: Data("Bad Request".utf8), on: connection)
+            send(status: 400, headers: [:], body: Data("Bad Request".utf8), on: connection, keepAlive: false, remainder: Data())
             return
         }
 
+        let keepAlive = request.headers["connection"]?.lowercased() != "close"
+
         guard request.method == "GET" || request.method == "HEAD" else {
-            send(status: 405, headers: ["Allow": "GET, HEAD"], body: Data("Method Not Allowed".utf8), on: connection)
+            send(status: 405, headers: ["Allow": "GET, HEAD"], body: Data("Method Not Allowed".utf8), on: connection, keepAlive: keepAlive, remainder: remainder)
             return
         }
 
         guard let fileURL = resolveFileURL(from: request) else {
-            send(status: 404, headers: [:], body: Data("Not Found".utf8), on: connection, includeBody: request.method != "HEAD")
+            send(status: 404, headers: [:], body: Data("Not Found".utf8), on: connection, includeBody: request.method != "HEAD", keepAlive: keepAlive, remainder: remainder)
             return
         }
 
-        sendFile(fileURL, request: request, on: connection)
+        sendFile(fileURL, request: request, on: connection, keepAlive: keepAlive, remainder: remainder)
     }
 
     private nonisolated func resolveFileURL(from request: HTTPRequest) -> URL? {
@@ -210,60 +226,140 @@ final class LocalHTTPServer: ObservableObject {
         return String(data: data, encoding: .utf8)
     }
 
-    private nonisolated func sendFile(_ url: URL, request: HTTPRequest, on connection: NWConnection) {
+    private nonisolated func sendFile(_ url: URL, request: HTTPRequest, on connection: NWConnection, keepAlive: Bool, remainder: Data) {
         do {
             let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
             let fileSize = (attributes[.size] as? NSNumber)?.uint64Value ?? 0
+            let modificationDate = attributes[.modificationDate] as? Date
             let mimeType = MimeTypes.type(for: url)
             let range = parseRange(request.headers["range"], fileSize: fileSize)
             let includeBody = request.method != "HEAD"
-            let body = includeBody ? try readFile(url, range: range, fileSize: fileSize) : Data()
 
-            if let range {
-                send(
-                    status: 206,
-                    headers: [
-                        "Content-Type": mimeType,
-                        "Accept-Ranges": "bytes",
-                        "Content-Length": "\(range.length)",
-                        "Content-Range": "bytes \(range.start)-\(range.end)/\(fileSize)"
-                    ],
-                    body: body,
-                    on: connection,
-                    includeBody: includeBody
-                )
-            } else {
-                send(
-                    status: 200,
-                    headers: [
-                        "Content-Type": mimeType,
-                        "Accept-Ranges": "bytes",
-                        "Content-Length": "\(fileSize)"
-                    ],
-                    body: body,
-                    on: connection,
-                    includeBody: includeBody
-                )
+            var headers = [
+                "Content-Type": mimeType,
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "no-cache"
+            ]
+            if let modificationDate {
+                headers["Last-Modified"] = Self.httpDate(from: modificationDate)
             }
+
+            if range == nil,
+               let modificationDate,
+               let clientDate = Self.date(fromHTTPDate: request.headers["if-modified-since"]),
+               UInt64(modificationDate.timeIntervalSince1970) <= UInt64(clientDate.timeIntervalSince1970) {
+                headers["Content-Length"] = "0"
+                send(status: 304, headers: headers, body: Data(), on: connection, includeBody: false, keepAlive: keepAlive, remainder: remainder)
+                return
+            }
+
+            let status: Int
+            let bodyStart: UInt64
+            let bodyLength: UInt64
+            if let range {
+                status = 206
+                bodyStart = range.start
+                bodyLength = range.length
+                headers["Content-Length"] = "\(range.length)"
+                headers["Content-Range"] = "bytes \(range.start)-\(range.end)/\(fileSize)"
+            } else {
+                status = 200
+                bodyStart = 0
+                bodyLength = fileSize
+                headers["Content-Length"] = "\(fileSize)"
+            }
+
+            guard includeBody, bodyLength > 0 else {
+                send(status: status, headers: headers, body: Data(), on: connection, includeBody: false, keepAlive: keepAlive, remainder: remainder)
+                return
+            }
+
+            if bodyLength > Self.streamingThreshold {
+                let handle = try FileHandle(forReadingFrom: url)
+                try handle.seek(toOffset: bodyStart)
+                let header = headerData(status: status, headers: headers, keepAlive: keepAlive)
+                connection.send(content: header, completion: .contentProcessed { [weak self] error in
+                    guard let self else { return }
+                    if error != nil {
+                        try? handle.close()
+                        connection.cancel()
+                        return
+                    }
+                    self.streamBody(from: handle, remaining: bodyLength, on: connection, keepAlive: keepAlive, remainder: remainder)
+                })
+                return
+            }
+
+            let handle = try FileHandle(forReadingFrom: url)
+            defer { try? handle.close() }
+            try handle.seek(toOffset: bodyStart)
+            let body = try handle.read(upToCount: Int(bodyLength)) ?? Data()
+            send(status: status, headers: headers, body: body, on: connection, keepAlive: keepAlive, remainder: remainder)
         } catch {
-            send(status: 500, headers: [:], body: Data("Server Error".utf8), on: connection)
+            send(status: 500, headers: [:], body: Data("Server Error".utf8), on: connection, keepAlive: false, remainder: Data())
         }
     }
 
-    private nonisolated func readFile(_ url: URL, range: ByteRange?, fileSize: UInt64) throws -> Data {
-        let handle = try FileHandle(forReadingFrom: url)
-        defer { try? handle.close() }
-
-        if let range {
-            try handle.seek(toOffset: range.start)
-            return try handle.read(upToCount: Int(range.length)) ?? Data()
+    private nonisolated func streamBody(
+        from handle: FileHandle,
+        remaining: UInt64,
+        on connection: NWConnection,
+        keepAlive: Bool,
+        remainder: Data
+    ) {
+        guard remaining > 0 else {
+            try? handle.close()
+            finish(on: connection, keepAlive: keepAlive, remainder: remainder)
+            return
         }
 
-        if fileSize > 32 * 1024 * 1024 {
-            return try handle.readToEnd() ?? Data()
+        let chunkSize = Int(min(remaining, UInt64(Self.streamingChunkSize)))
+        guard let chunk = try? handle.read(upToCount: chunkSize), !chunk.isEmpty else {
+            try? handle.close()
+            connection.cancel()
+            return
         }
 
-        return try Data(contentsOf: url)
+        connection.send(content: chunk, completion: .contentProcessed { [weak self] error in
+            guard let self else { return }
+            if error != nil {
+                try? handle.close()
+                connection.cancel()
+                return
+            }
+            self.streamBody(
+                from: handle,
+                remaining: remaining - UInt64(chunk.count),
+                on: connection,
+                keepAlive: keepAlive,
+                remainder: remainder
+            )
+        })
+    }
+
+    private nonisolated func finish(on connection: NWConnection, keepAlive: Bool, remainder: Data) {
+        if keepAlive {
+            receive(on: connection, buffer: remainder)
+        } else {
+            connection.cancel()
+        }
+    }
+
+    private nonisolated static let httpDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "GMT")
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
+        return formatter
+    }()
+
+    private nonisolated static func httpDate(from date: Date) -> String {
+        httpDateFormatter.string(from: date)
+    }
+
+    private nonisolated static func date(fromHTTPDate value: String?) -> Date? {
+        guard let value else { return nil }
+        return httpDateFormatter.date(from: value)
     }
 
     private nonisolated func parseRange(_ header: String?, fileSize: UInt64) -> ByteRange? {
@@ -290,18 +386,12 @@ final class LocalHTTPServer: ObservableObject {
         return nil
     }
 
-    private nonisolated func send(
-        status: Int,
-        headers: [String: String],
-        body: Data,
-        on connection: NWConnection,
-        includeBody: Bool = true
-    ) {
+    private nonisolated func headerData(status: Int, headers: [String: String], keepAlive: Bool, bodyCount: Int? = nil) -> Data {
         var responseHeaders = headers
-        responseHeaders["Connection"] = "close"
+        responseHeaders["Connection"] = keepAlive ? "keep-alive" : "close"
         responseHeaders["Server"] = "HTMLServe"
-        if responseHeaders["Content-Length"] == nil {
-            responseHeaders["Content-Length"] = "\(body.count)"
+        if responseHeaders["Content-Length"] == nil, let bodyCount {
+            responseHeaders["Content-Length"] = "\(bodyCount)"
         }
 
         let reason = HTTPStatus.reason(for: status)
@@ -310,14 +400,29 @@ final class LocalHTTPServer: ObservableObject {
             header += "\(key): \(value)\r\n"
         }
         header += "\r\n"
+        return Data(header.utf8)
+    }
 
-        var payload = Data(header.utf8)
+    private nonisolated func send(
+        status: Int,
+        headers: [String: String],
+        body: Data,
+        on connection: NWConnection,
+        includeBody: Bool = true,
+        keepAlive: Bool,
+        remainder: Data
+    ) {
+        var payload = headerData(status: status, headers: headers, keepAlive: keepAlive, bodyCount: body.count)
         if includeBody {
             payload.append(body)
         }
 
-        connection.send(content: payload, completion: .contentProcessed { _ in
-            connection.cancel()
+        connection.send(content: payload, completion: .contentProcessed { [weak self] error in
+            guard let self, error == nil else {
+                connection.cancel()
+                return
+            }
+            self.finish(on: connection, keepAlive: keepAlive, remainder: remainder)
         })
     }
 }
@@ -372,6 +477,7 @@ private enum HTTPStatus {
         switch status {
         case 200: return "OK"
         case 206: return "Partial Content"
+        case 304: return "Not Modified"
         case 400: return "Bad Request"
         case 404: return "Not Found"
         case 405: return "Method Not Allowed"

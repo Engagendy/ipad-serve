@@ -7,6 +7,7 @@ struct BrowserView: View {
     let page: BrowserPage
     let close: () -> Void
     var goHome: () -> Void = {}
+    var share: () -> Void = {}
     @StateObject private var state = WebViewState()
     @State private var isFullScreen = false
 
@@ -34,7 +35,8 @@ struct BrowserView: View {
                     state: state,
                     isFullScreen: $isFullScreen,
                     close: close,
-                    goHome: goHome
+                    goHome: goHome,
+                    share: share
                 )
             }
         }
@@ -49,11 +51,13 @@ private struct BrowserToolbar: View {
     @Binding var isFullScreen: Bool
     let close: () -> Void
     let goHome: () -> Void
+    let share: () -> Void
 
     var body: some View {
         HStack(spacing: 8) {
             BrowserIconButton("Home", systemImage: "house", action: goHome)
                 .keyboardShortcut("h", modifiers: [.command, .shift])
+            BrowserIconButton("Share QR Code", systemImage: "qrcode", action: share)
             BrowserIconButton("Files", systemImage: "folder", action: close)
                 .keyboardShortcut("l", modifiers: [.command, .shift])
 

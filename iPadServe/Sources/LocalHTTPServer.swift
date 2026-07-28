@@ -90,7 +90,28 @@ final class LocalHTTPServer: ObservableObject {
     func setLANSharing(_ enabled: Bool) async {
         guard allowsLAN != enabled else { return }
         allowsLAN = enabled
+        if enabled {
+            triggerLocalNetworkPermissionPrompt()
+        }
         try? await restart()
+    }
+
+    /// iOS only shows the Local Network permission dialog when the app engages
+    /// with the network; a throwaway broadcast makes the prompt appear the
+    /// moment the teacher enables sharing instead of when a student connects.
+    private nonisolated func triggerLocalNetworkPermissionPrompt() {
+        let connection = NWConnection(host: "255.255.255.255", port: 9, using: .udp)
+        connection.stateUpdateHandler = { state in
+            if case .ready = state {
+                connection.send(content: Data("HTMLServe".utf8), completion: .contentProcessed { _ in
+                    connection.cancel()
+                })
+            }
+        }
+        connection.start(queue: queue)
+        queue.asyncAfter(deadline: .now() + 3) {
+            connection.cancel()
+        }
     }
 
     func lanURL(for project: ProjectItem, file: ProjectFile) -> URL? {

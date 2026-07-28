@@ -42,15 +42,38 @@ final class iPadServeUITests: XCTestCase {
             .firstMatch
         XCTAssertTrue(shareToggle.exists)
         addScreenshot(named: "04-import-menu")
+    }
 
-        // Enable classroom sharing; the QR toolbar button should appear.
-        shareToggle.tap()
-        XCTAssertTrue(app.buttons["Classroom QR Code"].waitForExistence(timeout: 8))
-        addScreenshot(named: "05-classroom-sharing")
+    func testShareQRFlow() throws {
+        let app = XCUIApplication()
+        app.launch()
 
-        app.buttons["Classroom QR Code"].tap()
-        XCTAssertTrue(app.staticTexts["Students on the same Wi-Fi can scan this code to open the book."].waitForExistence(timeout: 8))
-        addScreenshot(named: "06-classroom-qr")
+        // The QR button is always visible in the detail toolbar; when
+        // sharing is off it offers to turn sharing on.
+        let qrButton = app.buttons["Share QR Code"]
+        XCTAssertTrue(qrButton.waitForExistence(timeout: 12))
+        qrButton.tap()
+
+        let turnOn = app.buttons["Turn On Sharing"]
+        XCTAssertTrue(turnOn.waitForExistence(timeout: 8))
+        addScreenshot(named: "05-sharing-off")
+        turnOn.tap()
+
+        let hint = app.staticTexts["People on the same Wi-Fi can scan this code to see the same project."]
+        XCTAssertTrue(hint.waitForExistence(timeout: 8))
+        addScreenshot(named: "06-share-qr")
+        app.buttons["Done"].tap()
+
+        // The QR button is also in the browser toolbar, beside Home,
+        // while a page is running.
+        app.buttons["Run"].tap()
+        XCTAssertTrue(app.webViews.firstMatch.waitForExistence(timeout: 12))
+        XCTAssertTrue(app.buttons["Home"].waitForExistence(timeout: 8))
+        let browserQR = app.buttons["Share QR Code"]
+        XCTAssertTrue(browserQR.waitForExistence(timeout: 8))
+        browserQR.tap()
+        XCTAssertTrue(hint.waitForExistence(timeout: 8))
+        addScreenshot(named: "07-browser-qr")
     }
 
     private func addScreenshot(named name: String) {

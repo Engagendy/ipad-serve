@@ -1,17 +1,44 @@
 import CoreImage
 import SwiftUI
 
-/// Shown when classroom sharing is on: a QR code students on the same Wi-Fi
-/// can scan to open the project's entry page on their own devices.
+/// Always reachable from the QR toolbar buttons. When sharing is off it
+/// offers to turn it on; when on, it shows a QR code people on the same
+/// Wi-Fi can scan to open the project on their own devices.
 struct ClassroomShareView: View {
-    let projectName: String
-    let url: URL?
+    @EnvironmentObject private var store: ProjectStore
+    @EnvironmentObject private var server: LocalHTTPServer
+    let project: ProjectItem
     @Environment(\.dismiss) private var dismiss
+
+    private var shareURL: URL? {
+        guard let entry = store.entryPage(for: project) else { return nil }
+        return server.lanURL(for: project, file: entry)
+    }
 
     var body: some View {
         NavigationStack {
             Group {
-                if let url {
+                if !server.allowsLAN {
+                    VStack(spacing: 16) {
+                        Image(systemName: "wifi")
+                            .font(.system(size: 44))
+                            .foregroundStyle(.tint)
+                        Text("Sharing Is Off")
+                            .font(.title2.bold())
+                        Text("Turn on sharing so people on the same Wi-Fi can open this project on their own devices.")
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                        Button {
+                            Task { await server.setLANSharing(true) }
+                        } label: {
+                            Text("Turn On Sharing")
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 4)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    .padding(32)
+                } else if let url = shareURL {
                     VStack(spacing: 24) {
                         if let qr = Self.qrImage(for: url.absoluteString) {
                             Image(uiImage: qr)
@@ -27,9 +54,13 @@ struct ClassroomShareView: View {
                             .textSelection(.enabled)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.secondary)
-                        Text("Students on the same Wi-Fi can scan this code to open the book.")
+                        Text("People on the same Wi-Fi can scan this code to see the same project.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                        Text("If others can't connect, allow Local Network access for HTML Serve in Settings > Privacy & Security > Local Network.")
+                            .font(.footnote)
+                            .foregroundStyle(.tertiary)
                             .multilineTextAlignment(.center)
                     }
                     .padding()
@@ -37,11 +68,11 @@ struct ClassroomShareView: View {
                     ContentUnavailableView(
                         "Sharing Unavailable",
                         systemImage: "wifi.slash",
-                        description: Text("Turn on classroom sharing and make sure the iPad is connected to Wi-Fi.")
+                        description: Text("Make sure the iPad is connected to Wi-Fi.")
                     )
                 }
             }
-            .navigationTitle(projectName)
+            .navigationTitle(project.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

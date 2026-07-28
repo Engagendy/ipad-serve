@@ -152,10 +152,7 @@ struct ContentView: View {
             }
         }
         .sheet(item: $shareTarget) { project in
-            ClassroomShareView(
-                projectName: project.name,
-                url: store.entryPage(for: project).flatMap { server.lanURL(for: project, file: $0) }
-            )
+            ClassroomShareView(project: project)
         }
     }
 
@@ -218,12 +215,10 @@ struct ContentView: View {
                         Label("Rename", systemImage: "pencil")
                     }
                 }
-                if server.allowsLAN {
-                    Button {
-                        shareTarget = project
-                    } label: {
-                        Label("Classroom QR Code", systemImage: "qrcode")
-                    }
+                Button {
+                    shareTarget = project
+                } label: {
+                    Label("Share QR Code", systemImage: "qrcode")
                 }
                 Divider()
                 Button(role: .destructive) {

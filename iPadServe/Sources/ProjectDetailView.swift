@@ -22,7 +22,8 @@ struct ProjectDetailView: View {
                     goHome: {
                         self.selectedPage = nil
                         goHome()
-                    }
+                    },
+                    share: { isSharePresented = true }
                 )
             } else {
                 List {
@@ -41,13 +42,11 @@ struct ProjectDetailView: View {
                     ToolbarItem(placement: .topBarTrailing) {
                         ImportMenu()
                     }
-                    if server.allowsLAN {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button {
-                                isSharePresented = true
-                            } label: {
-                                Label("Classroom QR Code", systemImage: "qrcode")
-                            }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            isSharePresented = true
+                        } label: {
+                            Label("Share QR Code", systemImage: "qrcode")
                         }
                     }
                     ToolbarItem(placement: .topBarTrailing) {
@@ -61,12 +60,6 @@ struct ProjectDetailView: View {
                         .keyboardShortcut(.return, modifiers: .command)
                         .disabled(project.preferredEntry == nil)
                     }
-                }
-                .sheet(isPresented: $isSharePresented) {
-                    ClassroomShareView(
-                        projectName: project.name,
-                        url: store.entryPage(for: project).flatMap { server.lanURL(for: project, file: $0) }
-                    )
                 }
                 .overlay {
                     if hasLoadedItems, browserItems.isEmpty {
@@ -99,6 +92,9 @@ struct ProjectDetailView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(openError ?? "The local server could not open this file.")
+        }
+        .sheet(isPresented: $isSharePresented) {
+            ClassroomShareView(project: project)
         }
     }
 

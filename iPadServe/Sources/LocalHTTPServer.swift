@@ -10,6 +10,11 @@ final class LocalHTTPServer: ObservableObject {
 
     private var listener: NWListener?
     private let queue = DispatchQueue(label: "com.engagendy.HTMLServe.http")
+    private let lanSharingKey = "allowsLANSharing"
+
+    init() {
+        allowsLAN = UserDefaults.standard.bool(forKey: lanSharingKey)
+    }
 
     func start() async throws {
         if isRunning, port != nil, listener != nil { return }
@@ -90,6 +95,7 @@ final class LocalHTTPServer: ObservableObject {
     func setLANSharing(_ enabled: Bool) async {
         guard allowsLAN != enabled else { return }
         allowsLAN = enabled
+        UserDefaults.standard.set(enabled, forKey: lanSharingKey)
         if enabled {
             triggerLocalNetworkPermissionPrompt()
         }

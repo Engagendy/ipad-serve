@@ -221,12 +221,12 @@
         }
       }
     },
-    "If others can't connect, allow Local Network access for HTML Serve in Settings > Privacy & Security > Local Network.": {
+    "If others can't connect, allow Local Network access for HTML Serve in Settings > Privacy & Security > Local Network, then quit and reopen the app and scan a fresh code.": {
       "localizations": {
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Başkaları bağlanamıyorsa Ayarlar > Gizlilik ve Güvenlik > Yerel Ağ bölümünden HTML Serve için Yerel Ağ erişimine izin verin."
+            "value": "Başkaları bağlanamıyorsa Ayarlar > Gizlilik ve Güvenlik > Yerel Ağ bölümünden HTML Serve için Yerel Ağ erişimine izin verin, ardından uygulamayı kapatıp yeniden açın ve yeni bir kod tarayın."
           }
         }
       }
@@ -536,6 +536,7 @@
       }
     },
     "Share QR Code": {
+      "extractionState": "stale",
       "localizations": {
         "tr": {
           "stringUnit": {
@@ -595,6 +596,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yerel sunucu başlatılıyor..."
+          }
+        }
+      }
+    },
+    "Test This Link in Safari": {
+      "localizations": {
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu Bağlantıyı Safari'de Test Et"
           }
         }
       }

@@ -11,6 +11,7 @@ struct ProjectDetailView: View {
     @State private var openError: String?
     @State private var browserItems: [ProjectBrowserItem] = []
     @State private var hasLoadedItems = false
+    @State private var isSharePresented = false
 
     var body: some View {
         Group {
@@ -38,6 +39,18 @@ struct ProjectDetailView: View {
                 .navigationTitle(project.name)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
+                        ImportMenu()
+                    }
+                    if server.allowsLAN {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button {
+                                isSharePresented = true
+                            } label: {
+                                Label("Classroom QR Code", systemImage: "qrcode")
+                            }
+                        }
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
                         Button {
                             if let entry = store.entryPage(for: project) {
                                 Task { await open(entry) }
@@ -48,6 +61,12 @@ struct ProjectDetailView: View {
                         .keyboardShortcut(.return, modifiers: .command)
                         .disabled(project.preferredEntry == nil)
                     }
+                }
+                .sheet(isPresented: $isSharePresented) {
+                    ClassroomShareView(
+                        projectName: project.name,
+                        url: store.entryPage(for: project).flatMap { server.lanURL(for: project, file: $0) }
+                    )
                 }
                 .overlay {
                     if hasLoadedItems, browserItems.isEmpty {

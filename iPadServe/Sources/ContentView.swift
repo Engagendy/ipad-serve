@@ -7,8 +7,6 @@ struct ContentView: View {
     @EnvironmentObject private var router: LaunchRouter
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedProject: ProjectItem?
-    @State private var isImporting = false
-    @State private var importAsLink = false
     @State private var renameTarget: ProjectItem?
     @State private var renameText = ""
     @State private var shareTarget: ProjectItem?
@@ -35,29 +33,7 @@ struct ContentView: View {
             .navigationTitle("Projects")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            importAsLink = false
-                            isImporting = true
-                        } label: {
-                            Label("Copy Folder into App", systemImage: "folder.badge.plus")
-                        }
-                        Button {
-                            importAsLink = true
-                            isImporting = true
-                        } label: {
-                            Label("Link Folder in Place", systemImage: "link.badge.plus")
-                        }
-                        Divider()
-                        Toggle(isOn: Binding(
-                            get: { server.allowsLAN },
-                            set: { enabled in Task { await server.setLANSharing(enabled) } }
-                        )) {
-                            Label("Share on Local Network", systemImage: "wifi")
-                        }
-                    } label: {
-                        Label("Import Folder", systemImage: "folder.badge.plus")
-                    }
+                    ImportMenu()
                 }
             }
             .refreshable {
@@ -86,18 +62,6 @@ struct ContentView: View {
                 .id(selectedProject.id)
             } else {
                 ContentUnavailableView("Select a Project", systemImage: "rectangle.stack")
-            }
-        }
-        .fileImporter(
-            isPresented: $isImporting,
-            allowedContentTypes: [.folder],
-            allowsMultipleSelection: false
-        ) { result in
-            guard case let .success(urls) = result, let url = urls.first else { return }
-            if importAsLink {
-                store.linkFolder(from: url)
-            } else {
-                store.importFolder(from: url)
             }
         }
         .confirmationDialog(
@@ -287,6 +251,53 @@ struct ContentView: View {
     private func consumePendingRoute() -> Bool {
         router.pendingProjectName = nil
         return true
+    }
+}
+
+/// Import and sharing controls. Lives in both the sidebar and the project
+/// detail toolbars so it stays reachable when the sidebar is collapsed.
+struct ImportMenu: View {
+    @EnvironmentObject private var store: ProjectStore
+    @EnvironmentObject private var server: LocalHTTPServer
+    @State private var isImporting = false
+    @State private var importAsLink = false
+
+    var body: some View {
+        Menu {
+            Button {
+                importAsLink = false
+                isImporting = true
+            } label: {
+                Label("Copy Folder into App", systemImage: "folder.badge.plus")
+            }
+            Button {
+                importAsLink = true
+                isImporting = true
+            } label: {
+                Label("Link Folder in Place", systemImage: "link.badge.plus")
+            }
+            Divider()
+            Toggle(isOn: Binding(
+                get: { server.allowsLAN },
+                set: { enabled in Task { await server.setLANSharing(enabled) } }
+            )) {
+                Label("Share on Local Network", systemImage: "wifi")
+            }
+        } label: {
+            Label("Import Folder", systemImage: "folder.badge.plus")
+        }
+        .fileImporter(
+            isPresented: $isImporting,
+            allowedContentTypes: [.folder],
+            allowsMultipleSelection: false
+        ) { result in
+            guard case let .success(urls) = result, let url = urls.first else { return }
+            if importAsLink {
+                store.linkFolder(from: url)
+            } else {
+                store.importFolder(from: url)
+            }
+        }
     }
 }
 

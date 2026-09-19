@@ -5,18 +5,22 @@ struct ProjectItem: Identifiable, Hashable {
     let name: String
     let rootURL: URL
     let isLinked: Bool
+    /// A linked folder whose bookmark no longer resolves (moved, renamed, or
+    /// deleted). Broken projects keep their settings and can be re-linked.
+    let isBroken: Bool
     let htmlFiles: [ProjectFile]
 
-    init(id: UUID, name: String, rootURL: URL, isLinked: Bool = false) {
+    init(id: UUID, name: String, rootURL: URL, isLinked: Bool = false, isBroken: Bool = false) {
         self.id = id
         self.name = name
         self.rootURL = rootURL
         self.isLinked = isLinked
-        self.htmlFiles = FileScanner.htmlFiles(in: rootURL)
+        self.isBroken = isBroken
+        self.htmlFiles = isBroken ? [] : FileScanner.htmlFiles(in: rootURL)
     }
 
     var rootBrowserItems: [ProjectBrowserItem] {
-        FileScanner.browserItems(in: rootURL, root: rootURL)
+        isBroken ? [] : FileScanner.browserItems(in: rootURL, root: rootURL)
     }
 
     var preferredEntry: ProjectFile? {
@@ -24,13 +28,14 @@ struct ProjectItem: Identifiable, Hashable {
     }
 
     static func == (lhs: ProjectItem, rhs: ProjectItem) -> Bool {
-        lhs.id == rhs.id && lhs.name == rhs.name && lhs.rootURL == rhs.rootURL
+        lhs.id == rhs.id && lhs.name == rhs.name && lhs.rootURL == rhs.rootURL && lhs.isBroken == rhs.isBroken
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
         hasher.combine(name)
         hasher.combine(rootURL)
+        hasher.combine(isBroken)
     }
 }
 

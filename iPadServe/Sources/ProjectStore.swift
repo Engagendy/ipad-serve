@@ -14,7 +14,6 @@ final class ProjectStore: ObservableObject {
     @Published private(set) var favoriteNames: Set<String> = []
     @Published private(set) var defaultProjectName: String?
     @Published private(set) var lastOpenedPages: [String: String] = [:]
-    @Published var importError: String?
     @Published var pendingImport: PendingImport?
 
     private let fileManager = FileManager.default
@@ -22,6 +21,7 @@ final class ProjectStore: ObservableObject {
     private let defaultProjectKey = "defaultProjectName"
     private let lastOpenedPagesKey = "lastOpenedPages"
     private let linkedBookmarksKey = "linkedProjectBookmarks"
+    private let autoReloadKey = "autoReloadProjects"
     private var accessedLinkedURLs: [String: URL] = [:]
     private let bundledSampleName = "HTML Serve Guide"
     private let bundledSampleInstallKey = "didInstallBundledSampleProject.v5"
@@ -72,22 +72,26 @@ final class ProjectStore: ObservableObject {
         var bookmarks = linkedBookmarks()
         var didUpdateBookmarks = false
 
-        let items = bookmarks.compactMap { name, bookmark -> ProjectItem? in
+        let items = bookmarks.map { name, bookmark -> ProjectItem in
             var isStale = false
             guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale) else {
-                return nil
+                return brokenLinkedProject(named: name)
             }
 
             if accessedLinkedURLs[name] == nil, url.startAccessingSecurityScopedResource() {
                 accessedLinkedURLs[name] = url
             }
 
+            // Stale bookmarks still resolve; refresh the data silently so the
+            // link keeps working across renames and moves.
             if isStale, let fresh = try? url.bookmarkData() {
                 bookmarks[name] = fresh
                 didUpdateBookmarks = true
             }
 
-            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else { return nil }
+            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else {
+                return brokenLinkedProject(named: name)
+            }
             return ProjectItem(id: stableID(for: url), name: name, rootURL: url, isLinked: true)
         }
 
@@ -98,12 +102,45 @@ final class ProjectStore: ObservableObject {
         return items
     }
 
+    /// Placeholder for a linked folder whose bookmark no longer resolves; the
+    /// project keeps its name and settings so the user can re-link it.
+    private func brokenLinkedProject(named name: String) -> ProjectItem {
+        let placeholder = projectsDirectory.appendingPathComponent(".broken-link-\(name)", isDirectory: true)
+        return ProjectItem(id: stableID(forKey: "broken-link:\(name)"), name: name, rootURL: placeholder, isLinked: true, isBroken: true)
+    }
+
+    /// Rebinds a broken linked project to a freshly picked folder. Favorites,
+    /// launch default, and last-opened page survive because they are keyed by
+    /// the project name.
+    func relinkFolder(for project: ProjectItem, to sourceURL: URL) {
+        guard project.isLinked else { return }
+        guard sourceURL.startAccessingSecurityScopedResource() else {
+            AppNotifier.shared.error(String(localized: "The folder could not be accessed. Pick it again from Files."))
+            return
+        }
+
+        do {
+            let bookmark = try sourceURL.bookmarkData()
+            var bookmarks = linkedBookmarks()
+            bookmarks[project.name] = bookmark
+            UserDefaults.standard.set(bookmarks, forKey: linkedBookmarksKey)
+            if let old = accessedLinkedURLs.removeValue(forKey: project.name) {
+                old.stopAccessingSecurityScopedResource()
+            }
+            accessedLinkedURLs[project.name] = sourceURL
+            loadProjects()
+            AppNotifier.shared.info(String(localized: "\"\(project.name)\" is linked again."))
+        } catch {
+            sourceURL.stopAccessingSecurityScopedResource()
+            AppNotifier.shared.error(String(localized: "The folder could not be re-linked: \(error.localizedDescription)"))
+        }
+    }
+
     /// Links a folder in place with a security-scoped bookmark instead of
     /// copying it into the app, so large books don't use storage twice.
     func linkFolder(from sourceURL: URL) {
-        importError = nil
         guard sourceURL.startAccessingSecurityScopedResource() else {
-            importError = String(localized: "The folder could not be imported.")
+            AppNotifier.shared.error(String(localized: "The folder could not be linked because the app was denied access to it."))
             return
         }
 
@@ -112,7 +149,7 @@ final class ProjectStore: ObservableObject {
 
         guard !projects.contains(where: { $0.name == name }) else {
             sourceURL.stopAccessingSecurityScopedResource()
-            importError = String(localized: "A project named \"\(name)\" already exists.")
+            AppNotifier.shared.error(String(localized: "A project named \"\(name)\" already exists."))
             return
         }
 
@@ -125,22 +162,21 @@ final class ProjectStore: ObservableObject {
             loadProjects()
         } catch {
             sourceURL.stopAccessingSecurityScopedResource()
-            importError = error.localizedDescription
+            AppNotifier.shared.error(String(localized: "The folder could not be linked: \(error.localizedDescription)"))
         }
     }
 
     func rename(_ project: ProjectItem, to rawNewName: String) {
-        importError = nil
         let newName = rawNewName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !newName.isEmpty, newName != project.name, !project.isLinked else { return }
 
         guard !newName.contains("/"), !newName.hasPrefix(".") else {
-            importError = String(localized: "This name cannot be used.")
+            AppNotifier.shared.error(String(localized: "This name cannot be used."))
             return
         }
 
         guard !projects.contains(where: { $0.name == newName }) else {
-            importError = String(localized: "A project named \"\(newName)\" already exists.")
+            AppNotifier.shared.error(String(localized: "A project named \"\(newName)\" already exists."))
             return
         }
 
@@ -150,7 +186,7 @@ final class ProjectStore: ObservableObject {
             migratePreferences(from: project.name, to: newName)
             loadProjects()
         } catch {
-            importError = error.localizedDescription
+            AppNotifier.shared.error(String(localized: "The project could not be renamed: \(error.localizedDescription)"))
         }
     }
 
@@ -166,6 +202,11 @@ final class ProjectStore: ObservableObject {
         if let page = lastOpenedPages.removeValue(forKey: oldName) {
             lastOpenedPages[newName] = page
             UserDefaults.standard.set(lastOpenedPages, forKey: lastOpenedPagesKey)
+        }
+        var autoReloadMap = (UserDefaults.standard.dictionary(forKey: autoReloadKey) as? [String: Bool]) ?? [:]
+        if let enabled = autoReloadMap.removeValue(forKey: oldName) {
+            autoReloadMap[newName] = enabled
+            UserDefaults.standard.set(autoReloadMap, forKey: autoReloadKey)
         }
     }
 
@@ -212,9 +253,23 @@ final class ProjectStore: ObservableObject {
 
     func recordLastOpened(_ file: ProjectFile, in project: ProjectItem) {
         let ext = file.url.pathExtension.lowercased()
-        guard ext == "html" || ext == "htm" else { return }
+        guard ext == "html" || ext == "htm" || ext == "xhtml" else { return }
         lastOpenedPages[project.name] = file.relativePath
         UserDefaults.standard.set(lastOpenedPages, forKey: lastOpenedPagesKey)
+    }
+
+    /// Whether the browser should live-reload when project files change.
+    /// Defaults to on for linked folders (edited outside the app) and off for
+    /// copied projects (their files rarely change while served).
+    func isAutoReloadEnabled(_ project: ProjectItem) -> Bool {
+        let map = (UserDefaults.standard.dictionary(forKey: autoReloadKey) as? [String: Bool]) ?? [:]
+        return map[project.name] ?? project.isLinked
+    }
+
+    func setAutoReload(_ enabled: Bool, for project: ProjectItem) {
+        var map = (UserDefaults.standard.dictionary(forKey: autoReloadKey) as? [String: Bool]) ?? [:]
+        map[project.name] = enabled
+        UserDefaults.standard.set(map, forKey: autoReloadKey)
     }
 
     func isDefault(_ project: ProjectItem) -> Bool {
@@ -241,7 +296,6 @@ final class ProjectStore: ObservableObject {
     }
 
     func importFolder(from sourceURL: URL) {
-        importError = nil
         let didAccess = sourceURL.startAccessingSecurityScopedResource()
         defer {
             if didAccess {
@@ -260,7 +314,7 @@ final class ProjectStore: ObservableObject {
 
             if projects.first(where: { $0.name == name })?.isLinked == true {
                 try? fileManager.removeItem(at: staging)
-                importError = String(localized: "A project named \"\(name)\" already exists.")
+                AppNotifier.shared.error(String(localized: "A project named \"\(name)\" already exists."))
                 return
             }
 
@@ -272,8 +326,144 @@ final class ProjectStore: ObservableObject {
                 loadProjects()
             }
         } catch {
-            importError = error.localizedDescription
+            AppNotifier.shared.error(String(localized: "The folder could not be imported: \(error.localizedDescription)"))
         }
+    }
+
+    /// Imports several folders at once (multi-select in the document picker)
+    /// and reports a single summary. Name collisions are resolved by keeping
+    /// both, because the replace/keep-both dialog handles one import at a time.
+    func importFolders(from urls: [URL]) {
+        guard urls.count > 1 else {
+            if let url = urls.first {
+                importFolder(from: url)
+            }
+            return
+        }
+
+        var importedCount = 0
+        var failedNames: [String] = []
+
+        for sourceURL in urls {
+            let didAccess = sourceURL.startAccessingSecurityScopedResource()
+            defer {
+                if didAccess {
+                    sourceURL.stopAccessingSecurityScopedResource()
+                }
+            }
+
+            let rawName = sourceURL.deletingPathExtension().lastPathComponent
+            let name = rawName.isEmpty ? "Project" : rawName
+
+            do {
+                try fileManager.createDirectory(at: projectsDirectory, withIntermediateDirectories: true)
+                guard projects.first(where: { $0.name == name })?.isLinked != true else {
+                    failedNames.append(name)
+                    continue
+                }
+                let staging = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+                try copyDirectory(from: sourceURL, to: staging)
+                try fileManager.moveItem(at: staging, to: uniqueDestination(for: name))
+                importedCount += 1
+            } catch {
+                failedNames.append(name)
+            }
+        }
+
+        loadProjects()
+
+        if failedNames.isEmpty {
+            AppNotifier.shared.info(String(localized: "Imported \(importedCount) folders."))
+        } else {
+            AppNotifier.shared.error(String(localized: "Imported \(importedCount) of \(urls.count) folders. Not imported: \(failedNames.joined(separator: ", "))."))
+        }
+    }
+
+    func importZip(from sourceURL: URL) {
+        // Keep the security-scoped access alive for the whole async import,
+        // including the extraction that runs off the main actor.
+        let didAccess = sourceURL.startAccessingSecurityScopedResource()
+        Task {
+            defer {
+                if didAccess {
+                    sourceURL.stopAccessingSecurityScopedResource()
+                }
+            }
+            await importZipContents(from: sourceURL)
+        }
+    }
+
+    private func importZipContents(from sourceURL: URL) async {
+        do {
+            try fileManager.createDirectory(at: projectsDirectory, withIntermediateDirectories: true)
+            let unzipRoot = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            // Inflating a whole archive can take seconds; keep it off the
+            // main actor so the UI stays responsive.
+            try await Task.detached(priority: .userInitiated) {
+                try ZipArchive.extract(sourceURL, to: unzipRoot)
+            }.value
+
+            // A zip made from a folder usually wraps everything in one
+            // top-level folder; use that folder as the project root and name.
+            var staging = unzipRoot
+            var rawName = sourceURL.deletingPathExtension().lastPathComponent
+            let topLevel = (try? fileManager.contentsOfDirectory(
+                at: unzipRoot,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            )) ?? []
+            if topLevel.count == 1,
+               let onlyFolder = topLevel.first,
+               (try? onlyFolder.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
+                staging = onlyFolder
+                rawName = onlyFolder.lastPathComponent
+            }
+            let name = rawName.isEmpty ? "Project" : rawName
+
+            if projects.first(where: { $0.name == name })?.isLinked == true {
+                try? fileManager.removeItem(at: unzipRoot)
+                AppNotifier.shared.error(String(localized: "A project named \"\(name)\" already exists."))
+                return
+            }
+
+            let destination = projectsDirectory.appendingPathComponent(name, isDirectory: true)
+            if fileManager.fileExists(atPath: destination.path) {
+                pendingImport = PendingImport(stagedURL: staging, name: name)
+            } else {
+                try fileManager.moveItem(at: staging, to: destination)
+                loadProjects()
+            }
+        } catch {
+            AppNotifier.shared.error(String(localized: "The ZIP archive could not be imported: \(error.localizedDescription)"))
+        }
+    }
+
+    /// Zips the project folder for exporting via the share sheet. Runs the
+    /// coordinated read off the main actor because zipping can take a while.
+    nonisolated static func exportZip(for project: ProjectItem) throws -> URL {
+        let coordinator = NSFileCoordinator()
+        var coordinationError: NSError?
+        var copyError: Error?
+        var exportedURL: URL?
+
+        coordinator.coordinate(readingItemAt: project.rootURL, options: .forUploading, error: &coordinationError) { zippedURL in
+            do {
+                let container = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+                try FileManager.default.createDirectory(at: container, withIntermediateDirectories: true)
+                let target = container.appendingPathComponent("\(project.name).zip")
+                try FileManager.default.copyItem(at: zippedURL, to: target)
+                exportedURL = target
+            } catch {
+                copyError = error
+            }
+        }
+
+        if let coordinationError { throw coordinationError }
+        if let copyError { throw copyError }
+        guard let exportedURL else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+        return exportedURL
     }
 
     func resolvePendingImport(replacing: Bool) {
@@ -293,7 +483,7 @@ final class ProjectStore: ObservableObject {
             try fileManager.moveItem(at: pending.stagedURL, to: destination)
             loadProjects()
         } catch {
-            importError = error.localizedDescription
+            AppNotifier.shared.error(String(localized: "The imported files could not be copied: \(error.localizedDescription)"))
         }
     }
 
@@ -325,9 +515,13 @@ final class ProjectStore: ObservableObject {
             if lastOpenedPages.removeValue(forKey: project.name) != nil {
                 UserDefaults.standard.set(lastOpenedPages, forKey: lastOpenedPagesKey)
             }
+            var autoReloadMap = (UserDefaults.standard.dictionary(forKey: autoReloadKey) as? [String: Bool]) ?? [:]
+            if autoReloadMap.removeValue(forKey: project.name) != nil {
+                UserDefaults.standard.set(autoReloadMap, forKey: autoReloadKey)
+            }
             loadProjects()
         } catch {
-            importError = error.localizedDescription
+            AppNotifier.shared.error(String(localized: "The project could not be deleted: \(error.localizedDescription)"))
         }
     }
 
@@ -353,7 +547,7 @@ final class ProjectStore: ObservableObject {
             }
             UserDefaults.standard.set(true, forKey: bundledSampleInstallKey)
         } catch {
-            importError = error.localizedDescription
+            AppNotifier.shared.error(String(localized: "The sample project could not be installed: \(error.localizedDescription)"))
         }
     }
 
@@ -395,7 +589,11 @@ final class ProjectStore: ObservableObject {
     }
 
     private func stableID(for url: URL) -> UUID {
-        let digest = SHA256.hash(data: Data(url.standardizedFileURL.path.utf8))
+        stableID(forKey: url.standardizedFileURL.path)
+    }
+
+    private func stableID(forKey key: String) -> UUID {
+        let digest = SHA256.hash(data: Data(key.utf8))
         let bytes = Array(digest.prefix(16))
         return UUID(uuid: (
             bytes[0], bytes[1], bytes[2], bytes[3],

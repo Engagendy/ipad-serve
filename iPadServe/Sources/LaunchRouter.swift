@@ -11,10 +11,27 @@ final class LaunchRouter: ObservableObject {
     static let quickActionType = "com.engagendy.iPadServe.openProject"
     static let quickActionProjectKey = "projectName"
 
+    private static let pendingRouteKey = "pendingProjectRoute"
+
     @Published var pendingProjectName: String?
 
+    init() {
+        // Restore a route that never finished, e.g. the app was killed
+        // between receiving a link and loading the project list.
+        pendingProjectName = UserDefaults.standard.string(forKey: Self.pendingRouteKey)
+    }
+
     func requestOpen(projectNamed name: String) {
+        // Persist the route so it survives a crash or cold start; it is
+        // cleared once ContentView routes (or rejects) it.
+        UserDefaults.standard.set(name, forKey: Self.pendingRouteKey)
         pendingProjectName = name
+    }
+
+    /// Clears the pending route after it has been applied or rejected.
+    func consumePendingRoute() {
+        UserDefaults.standard.removeObject(forKey: Self.pendingRouteKey)
+        pendingProjectName = nil
     }
 
     func handle(shortcutItem: UIApplicationShortcutItem) -> Bool {

@@ -65,7 +65,7 @@ enum FileScanner {
     }
 
     private static func isHTML(_ url: URL) -> Bool {
-        url.pathExtension.lowercased() == "html" || url.pathExtension.lowercased() == "htm"
+        ["html", "htm", "xhtml"].contains(url.pathExtension.lowercased())
     }
 
     private static func sortBrowserItems(_ lhs: ProjectBrowserItem, _ rhs: ProjectBrowserItem) -> Bool {

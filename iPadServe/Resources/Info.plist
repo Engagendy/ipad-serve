@@ -44,8 +44,17 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>A project page you open can ask to use the camera, for example to take a photo or use a video stream. HTML Serve never uses the camera on its own.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>HTML Serve uses the local network only when you enable sharing, so people on the same Wi-Fi can open your projects.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>A project page you open can ask to use the microphone, for example to record audio. HTML Serve never uses the microphone on its own.</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
+	</dict>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchScreen</key>

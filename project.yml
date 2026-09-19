@@ -4,8 +4,8 @@ options:
   deploymentTarget:
     iOS: "17.0"
 settings:
-  MARKETING_VERSION: 1.1.0
-  CURRENT_PROJECT_VERSION: 8
+  MARKETING_VERSION: 1.2.0
+  CURRENT_PROJECT_VERSION: 14
   DEVELOPMENT_TEAM: 7JM77223V5
 targets:
   iPadServe:
@@ -36,6 +36,8 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
         UISupportedInterfaceOrientations~ipad:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationPortraitUpsideDown
@@ -48,6 +50,11 @@ targets:
             CFBundleURLSchemes:
               - htmlserve
         NSLocalNetworkUsageDescription: HTML Serve uses the local network only when you enable sharing, so people on the same Wi-Fi can open your projects.
+        # A project's own HTML can ask for the camera or microphone, through a
+        # file input or getUserMedia. iOS terminates the app outright if these
+        # keys are missing when the web view opens the camera.
+        NSCameraUsageDescription: A project page you open can ask to use the camera, for example to take a photo or use a video stream. HTML Serve never uses the camera on its own.
+        NSMicrophoneUsageDescription: A project page you open can ask to use the microphone, for example to record audio. HTML Serve never uses the microphone on its own.
         NSAppTransportSecurity:
           NSAllowsArbitraryLoadsInWebContent: true
           NSAllowsLocalNetworking: true

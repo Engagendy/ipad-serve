@@ -30,8 +30,9 @@ final class iPadServeUITests: XCTestCase {
         app.launch()
 
         // The app auto-selects a project, so the menu must be reachable
-        // from the detail toolbar even with the sidebar collapsed.
-        let importMenu = app.buttons["Import Folder"]
+        // from the detail toolbar even with the sidebar collapsed. When the
+        // sidebar is visible the menu appears in both toolbars, so pick one.
+        let importMenu = app.buttons["Import Folder"].firstMatch
         XCTAssertTrue(importMenu.waitForExistence(timeout: 12))
         importMenu.tap()
 
@@ -54,10 +55,13 @@ final class iPadServeUITests: XCTestCase {
         XCTAssertTrue(qrButton.waitForExistence(timeout: 12))
         qrButton.tap()
 
+        // Sharing persists across launches, so a previous run may have left
+        // it on; only walk through the turn-on step when it is off.
         let turnOn = app.buttons["Turn On Sharing"]
-        XCTAssertTrue(turnOn.waitForExistence(timeout: 8))
-        addScreenshot(named: "05-sharing-off")
-        turnOn.tap()
+        if turnOn.waitForExistence(timeout: 4) {
+            addScreenshot(named: "05-sharing-off")
+            turnOn.tap()
+        }
 
         let hint = app.staticTexts["People on the same Wi-Fi can scan this code to see the same project."]
         XCTAssertTrue(hint.waitForExistence(timeout: 8))

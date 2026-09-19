@@ -7,10 +7,15 @@ final class LocalHTTPServer: ObservableObject {
     @Published private(set) var isRunning = false
     @Published private(set) var isStarting = false
     @Published private(set) var allowsLAN = false
+    /// True when the Local Network permission appears to be denied while LAN
+    /// sharing is on, so the UI can guide the user to Settings instead of
+    /// showing a QR code that silently fails for everyone else.
+    @Published private(set) var lanPermissionDenied = false
 
     private var listener: NWListener?
     private let queue = DispatchQueue(label: "com.engagendy.HTMLServe.http")
     private let lanSharingKey = "allowsLANSharing"
+    private let preferredPortKey = "lastBoundServerPort"
 
     init() {
         allowsLAN = UserDefaults.standard.bool(forKey: lanSharingKey)
@@ -28,18 +33,41 @@ final class LocalHTTPServer: ObservableObject {
             stop()
         }
 
+        if allowsLAN {
+            probeLocalNetworkPermission()
+        }
+
+        // Reuse the last successfully bound port so shared and cached URLs
+        // stay valid across sharing toggles and app relaunches; fall back to
+        // an ephemeral port if the remembered one cannot be bound.
+        let remembered = UserDefaults.standard.integer(forKey: preferredPortKey)
+        if remembered > 0, remembered <= Int(UInt16.max),
+           let preferredPort = NWEndpoint.Port(rawValue: UInt16(remembered)) {
+            do {
+                try startListener(on: preferredPort)
+                if await waitUntilReady() { return }
+                stop()
+            } catch {
+                stop()
+            }
+        }
+
+        try startListener(on: .any)
+    }
+
+    private func startListener(on requestedPort: NWEndpoint.Port) throws {
         let parameters = NWParameters.tcp
         parameters.allowLocalEndpointReuse = true
         // Bind to loopback unless the user explicitly enabled classroom
         // sharing; classrooms share Wi-Fi networks.
         if !allowsLAN {
-            parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: .ipv4(.loopback), port: .any)
+            parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: .ipv4(.loopback), port: requestedPort)
         }
         isStarting = true
 
         let listener: NWListener
         do {
-            listener = try NWListener(using: parameters, on: .any)
+            listener = try NWListener(using: parameters, on: requestedPort)
         } catch {
             isStarting = false
             throw error
@@ -56,6 +84,9 @@ final class LocalHTTPServer: ObservableObject {
                     self.port = listener.port?.rawValue
                     self.isRunning = listener.port != nil
                     self.isStarting = false
+                    if let boundPort = listener.port?.rawValue {
+                        UserDefaults.standard.set(Int(boundPort), forKey: self.preferredPortKey)
+                    }
                 case .waiting:
                     self.port = nil
                     self.isRunning = false
@@ -91,13 +122,13 @@ final class LocalHTTPServer: ObservableObject {
     }
 
     /// Classroom sharing: rebinds the server to all interfaces so devices on
-    /// the same Wi-Fi can open project pages. Note the port changes on restart.
+    /// the same Wi-Fi can open project pages.
     func setLANSharing(_ enabled: Bool) async {
         guard allowsLAN != enabled else { return }
         allowsLAN = enabled
         UserDefaults.standard.set(enabled, forKey: lanSharingKey)
-        if enabled {
-            triggerLocalNetworkPermissionPrompt()
+        if !enabled {
+            lanPermissionDenied = false
         }
         try? await restart()
     }
@@ -105,43 +136,62 @@ final class LocalHTTPServer: ObservableObject {
     /// iOS only shows the Local Network permission dialog when the app engages
     /// with the network; a throwaway broadcast makes the prompt appear the
     /// moment the teacher enables sharing instead of when a student connects.
-    private nonisolated func triggerLocalNetworkPermissionPrompt() {
+    /// The same broadcast doubles as a permission check: when access is
+    /// denied, the connection sits in `.waiting` with a POSIX EPERM error.
+    private nonisolated func probeLocalNetworkPermission() {
         let connection = NWConnection(host: "255.255.255.255", port: 9, using: .udp)
-        connection.stateUpdateHandler = { state in
-            if case .ready = state {
+        connection.stateUpdateHandler = { [weak self] state in
+            switch state {
+            case .ready:
+                Task { @MainActor [weak self] in
+                    self?.lanPermissionDenied = false
+                }
                 connection.send(content: Data("HTMLServe".utf8), completion: .contentProcessed { _ in
                     connection.cancel()
                 })
+            case .waiting(let error):
+                if case .posix(let code) = error, code == .EPERM {
+                    // Denied (or the dialog is still up). Keep the connection
+                    // alive so granting flips the state back to `.ready`.
+                    Task { @MainActor [weak self] in
+                        self?.lanPermissionDenied = true
+                    }
+                }
+            case .failed:
+                connection.cancel()
+            default:
+                break
             }
         }
         connection.start(queue: queue)
-        queue.asyncAfter(deadline: .now() + 3) {
+        queue.asyncAfter(deadline: .now() + 10) {
             connection.cancel()
         }
     }
 
     func lanURL(for project: ProjectItem, file: ProjectFile) -> URL? {
-        guard allowsLAN,
-              let url = url(for: project, file: file),
-              let address = Self.lanIPAddress(),
-              var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+        guard allowsLAN, let port, let address = Self.lanIPAddress() else {
             return nil
         }
-        components.host = address
-        return components.url
+        return URL(string: "http://\(address):\(port)/\(requestPath(for: project, file: file))")
     }
 
-    /// The device's IPv4 address on Wi-Fi (en0), for sharing with the classroom.
+    /// The device's LAN address for sharing with the classroom. Prefers the
+    /// Wi-Fi (en0) IPv4 address, then any IPv4 address, then a routable IPv6
+    /// address (returned in brackets, ready to be placed in a URL).
     static func lanIPAddress() -> String? {
         var ifaddrPointer: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&ifaddrPointer) == 0, let firstAddr = ifaddrPointer else { return nil }
         defer { freeifaddrs(ifaddrPointer) }
 
-        var fallback: String?
+        var ipv4Fallback: String?
+        var wifiIPv6: String?
+        var ipv6Fallback: String?
         for pointer in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
             let interface = pointer.pointee
-            guard let addressPointer = interface.ifa_addr,
-                  addressPointer.pointee.sa_family == UInt8(AF_INET) else { continue }
+            guard let addressPointer = interface.ifa_addr else { continue }
+            let family = addressPointer.pointee.sa_family
+            guard family == UInt8(AF_INET) || family == UInt8(AF_INET6) else { continue }
             let flags = Int32(interface.ifa_flags)
             guard (flags & IFF_UP) != 0, (flags & IFF_LOOPBACK) == 0 else { continue }
 
@@ -158,10 +208,20 @@ final class LocalHTTPServer: ObservableObject {
 
             let address = String(cString: host)
             let name = String(cString: interface.ifa_name)
-            if name == "en0" { return address }
-            if fallback == nil { fallback = address }
+            if family == UInt8(AF_INET) {
+                if name == "en0" { return address }
+                if ipv4Fallback == nil { ipv4Fallback = address }
+            } else {
+                // Skip link-local and other scoped IPv6 addresses; they carry
+                // a zone (fe80::…%en0) that other devices cannot resolve.
+                guard !address.contains("%"), !address.lowercased().hasPrefix("fe80") else { continue }
+                if name == "en0", wifiIPv6 == nil { wifiIPv6 = address }
+                if ipv6Fallback == nil { ipv6Fallback = address }
+            }
         }
-        return fallback
+        if let ipv4Fallback { return ipv4Fallback }
+        if let ipv6 = wifiIPv6 ?? ipv6Fallback { return "[\(ipv6)]" }
+        return nil
     }
 
     func stop() {
@@ -174,11 +234,15 @@ final class LocalHTTPServer: ObservableObject {
 
     func url(for project: ProjectItem, file: ProjectFile) -> URL? {
         guard let port else { return nil }
+        return URL(string: "http://127.0.0.1:\(port)/\(requestPath(for: project, file: file))")
+    }
+
+    private func requestPath(for project: ProjectItem, file: ProjectFile) -> String {
         let encodedRoot = Self.urlSafeBase64(project.rootURL.path)
         let encodedFile = file.relativePath.split(separator: "/").map {
             String($0).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? String($0)
         }.joined(separator: "/")
-        return URL(string: "http://127.0.0.1:\(port)/file/\(encodedRoot)/\(encodedFile)")
+        return "file/\(encodedRoot)/\(encodedFile)"
     }
 
     private nonisolated func handle(_ connection: NWConnection) {

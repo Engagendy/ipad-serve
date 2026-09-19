@@ -7,14 +7,22 @@ struct BrowserView: View {
     let page: BrowserPage
     let close: () -> Void
     var goHome: () -> Void = {}
-    var share: () -> Void = {}
+    /// Receives the URL of the currently open page, or nil when it is unknown
+    /// so the caller can fall back to the entry page.
+    var share: (URL?) -> Void = { _ in }
+    /// Incremented by the owner when project files change on disk; the web
+    /// view reloads if Auto Reload is on.
+    var reloadToken = 0
+    @Binding var autoReload: Bool
     @StateObject private var state = WebViewState()
+    @StateObject private var console = JSConsoleStore()
     @State private var isFullScreen = false
 
     var body: some View {
         ZStack(alignment: .top) {
-            WebView(url: page.url, state: state)
+            WebView(url: page.url, state: state, console: console)
                 .padding(.top, isFullScreen ? fullScreenTopInset : contentTopInset)
+                .padding(.bottom, console.isPanelOpen && !isFullScreen ? 220 : 0)
                 .ignoresSafeArea(isFullScreen ? .all : .container, edges: .top)
 
             if let errorMessage = state.errorMessage {
@@ -33,22 +41,39 @@ struct BrowserView: View {
             } else {
                 BrowserToolbar(
                     state: state,
+                    console: console,
                     isFullScreen: $isFullScreen,
+                    autoReload: $autoReload,
                     close: close,
                     goHome: goHome,
-                    share: share
+                    share: { share(state.webView?.url) }
                 )
             }
+
+            if console.isPanelOpen && !isFullScreen {
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    JSConsolePanel(console: console) {
+                        console.isPanelOpen = false
+                    }
+                }
+            }
         }
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        // The navigation bar is hidden by ProjectDetailView, which owns this
+        // column's navigation configuration for the whole of its lifetime.
         .statusBarHidden(isFullScreen)
+        .onChange(of: reloadToken) { _, _ in
+            guard autoReload else { return }
+            state.webView?.reload()
+        }
     }
 }
 
 private struct BrowserToolbar: View {
     @ObservedObject var state: WebViewState
+    @ObservedObject var console: JSConsoleStore
     @Binding var isFullScreen: Bool
+    @Binding var autoReload: Bool
     let close: () -> Void
     let goHome: () -> Void
     let share: () -> Void
@@ -81,10 +106,33 @@ private struct BrowserToolbar: View {
             }
             .keyboardShortcut("r", modifiers: .command)
 
+            BrowserIconButton(
+                autoReload ? "Auto Reload On" : "Auto Reload Off",
+                systemImage: autoReload ? "arrow.triangle.2.circlepath.circle.fill" : "arrow.triangle.2.circlepath.circle"
+            ) {
+                autoReload.toggle()
+            }
+            .keyboardShortcut("r", modifiers: [.command, .shift])
+            .foregroundStyle(autoReload ? Color.accentColor : Color.primary)
+
             BrowserIconButton("Full Screen", systemImage: "arrow.up.left.and.arrow.down.right") {
                 isFullScreen = true
             }
             .keyboardShortcut("f", modifiers: [.command, .shift])
+
+            BrowserIconButton("Console", systemImage: "apple.terminal") {
+                console.isPanelOpen.toggle()
+            }
+            .keyboardShortcut("j", modifiers: [.command, .option])
+            .overlay(alignment: .topTrailing) {
+                if console.hasUnseenErrors {
+                    Circle()
+                        .fill(.red)
+                        .frame(width: 7, height: 7)
+                        .padding(3)
+                        .allowsHitTesting(false)
+                }
+            }
 
             Spacer(minLength: 0)
 
@@ -165,12 +213,17 @@ final class WebViewState: ObservableObject {
 struct WebView: UIViewRepresentable {
     let url: URL
     @ObservedObject var state: WebViewState
+    @ObservedObject var console: JSConsoleStore
 
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.allowsInlineMediaPlayback = true
         configuration.mediaTypesRequiringUserActionForPlayback = []
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+        configuration.userContentController.addUserScript(
+            WKUserScript(source: JSConsoleStore.captureScript, injectionTime: .atDocumentStart, forMainFrameOnly: false)
+        )
+        configuration.userContentController.add(context.coordinator, name: JSConsoleStore.messageHandlerName)
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
@@ -190,19 +243,36 @@ struct WebView: UIViewRepresentable {
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(state: state)
+        Coordinator(state: state, console: console)
     }
 
-    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
+    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
         private let state: WebViewState
+        private let console: JSConsoleStore
 
-        init(state: WebViewState) {
+        init(state: WebViewState, console: JSConsoleStore) {
             self.state = state
+            self.console = console
+        }
+
+        func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard message.name == JSConsoleStore.messageHandlerName,
+                  let body = message.body as? [String: Any],
+                  let levelName = body["level"] as? String,
+                  let level = JSConsoleMessage.Level(rawValue: levelName),
+                  let text = body["message"] as? String else { return }
+            console.append(
+                level: level,
+                message: text,
+                source: body["source"] as? String ?? "",
+                line: body["line"] as? Int ?? 0
+            )
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
             state.errorMessage = nil
             state.refresh(from: webView)
+            console.clear()
         }
 
         func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
@@ -214,13 +284,45 @@ struct WebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            state.errorMessage = error.localizedDescription
+            if let message = Self.describe(error) {
+                state.errorMessage = message
+            }
             state.refresh(from: webView)
         }
 
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-            state.errorMessage = error.localizedDescription
+            if let message = Self.describe(error) {
+                state.errorMessage = message
+            }
             state.refresh(from: webView)
+        }
+
+        /// Builds a message that includes the underlying failure reason and the
+        /// failing URL, not just WebKit's generic top-level description.
+        /// Returns nil for cancelled loads (e.g. tapping a link mid-load).
+        private static func describe(_ error: Error) -> String? {
+            let nsError = error as NSError
+            if nsError.domain == NSURLErrorDomain, nsError.code == NSURLErrorCancelled {
+                return nil
+            }
+            if nsError.domain == "WebKitErrorDomain", nsError.code == 102 { // frame load interrupted
+                return nil
+            }
+
+            var lines = [nsError.localizedDescription]
+            var underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
+            while let current = underlying {
+                if !current.localizedDescription.isEmpty, !lines.contains(current.localizedDescription) {
+                    lines.append(current.localizedDescription)
+                }
+                underlying = current.userInfo[NSUnderlyingErrorKey] as? NSError
+            }
+            if let failingURL = (nsError.userInfo[NSURLErrorFailingURLStringErrorKey] as? String)
+                ?? (nsError.userInfo[NSURLErrorFailingURLErrorKey] as? URL)?.absoluteString {
+                lines.append(failingURL)
+            }
+            lines.append("\(nsError.domain) \(nsError.code)")
+            return lines.joined(separator: "\n")
         }
 
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
@@ -231,7 +333,47 @@ struct WebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
-            completionHandler()
+            let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default) { _ in
+                completionHandler()
+            })
+            present(alert, from: webView, fallback: completionHandler)
+        }
+
+        func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
+            let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { _ in
+                completionHandler(false)
+            })
+            alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default) { _ in
+                completionHandler(true)
+            })
+            present(alert, from: webView, fallback: { completionHandler(false) })
+        }
+
+        func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String, defaultText: String?, initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (String?) -> Void) {
+            let alert = UIAlertController(title: nil, message: prompt, preferredStyle: .alert)
+            alert.addTextField { textField in
+                textField.text = defaultText
+            }
+            alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel) { _ in
+                completionHandler(nil)
+            })
+            alert.addAction(UIAlertAction(title: String(localized: "OK"), style: .default) { [weak alert] _ in
+                completionHandler(alert?.textFields?.first?.text ?? "")
+            })
+            present(alert, from: webView, fallback: { completionHandler(nil) })
+        }
+
+        private func present(_ alert: UIAlertController, from webView: WKWebView, fallback: () -> Void) {
+            guard var presenter = webView.window?.rootViewController else {
+                fallback()
+                return
+            }
+            while let presented = presenter.presentedViewController {
+                presenter = presented
+            }
+            presenter.present(alert, animated: true)
         }
     }
 }

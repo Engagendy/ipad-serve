@@ -4,6 +4,7 @@ enum MimeTypes {
     static func type(for url: URL) -> String {
         switch url.pathExtension.lowercased() {
         case "html", "htm": return "text/html; charset=utf-8"
+        case "xhtml": return "application/xhtml+xml; charset=utf-8"
         case "css": return "text/css; charset=utf-8"
         case "js", "mjs": return "application/javascript; charset=utf-8"
         case "json": return "application/json; charset=utf-8"

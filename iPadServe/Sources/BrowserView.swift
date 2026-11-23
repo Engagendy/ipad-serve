@@ -16,6 +16,7 @@ struct BrowserView: View {
     @Binding var autoReload: Bool
     @StateObject private var state = WebViewState()
     @StateObject private var console = JSConsoleStore()
+    @EnvironmentObject private var server: LocalHTTPServer
     @State private var isFullScreen = false
 
     var body: some View {
@@ -66,6 +67,24 @@ struct BrowserView: View {
             guard autoReload else { return }
             state.webView?.reload()
         }
+        .onChange(of: server.recoveryToken) { _, _ in
+            recoverPageIfNeeded()
+        }
+    }
+
+    /// Runs once the server has been verified after the app returns to the
+    /// foreground. Reloads the page if it failed while the server socket was
+    /// dead, or if the server had to move to a different port.
+    private func recoverPageIfNeeded() {
+        guard let webView = state.webView, let port = server.port,
+              let current = state.failedURL ?? webView.url ?? Optional(page.url),
+              var components = URLComponents(url: current, resolvingAgainstBaseURL: false),
+              components.host == "127.0.0.1" else { return }
+        let portChanged = components.port != Int(port)
+        guard state.errorMessage != nil || portChanged else { return }
+        components.port = Int(port)
+        guard let url = components.url else { return }
+        webView.load(URLRequest(url: url))
     }
 }
 
@@ -202,6 +221,8 @@ final class WebViewState: ObservableObject {
     @Published var canGoForward = false
     @Published var isLoading = false
     @Published var errorMessage: String?
+    /// The URL whose load produced `errorMessage`, kept so it can be retried.
+    var failedURL: URL?
 
     func refresh(from webView: WKWebView) {
         canGoBack = webView.canGoBack
@@ -271,8 +292,15 @@ struct WebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
             state.errorMessage = nil
+            state.failedURL = nil
             state.refresh(from: webView)
             console.clear()
+        }
+
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            // iOS can kill the web content process while the app is in the
+            // background, leaving a blank page behind.
+            webView.reload()
         }
 
         func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
@@ -286,6 +314,7 @@ struct WebView: UIViewRepresentable {
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
             if let message = Self.describe(error) {
                 state.errorMessage = message
+                state.failedURL = Self.failingURL(of: error) ?? webView.url
             }
             state.refresh(from: webView)
         }
@@ -293,8 +322,16 @@ struct WebView: UIViewRepresentable {
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
             if let message = Self.describe(error) {
                 state.errorMessage = message
+                state.failedURL = Self.failingURL(of: error) ?? webView.url
             }
             state.refresh(from: webView)
+        }
+
+        private static func failingURL(of error: Error) -> URL? {
+            let userInfo = (error as NSError).userInfo
+            if let url = userInfo[NSURLErrorFailingURLErrorKey] as? URL { return url }
+            if let string = userInfo[NSURLErrorFailingURLStringErrorKey] as? String { return URL(string: string) }
+            return nil
         }
 
         /// Builds a message that includes the underlying failure reason and the

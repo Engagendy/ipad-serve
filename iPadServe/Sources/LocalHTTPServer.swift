@@ -1,12 +1,21 @@
 import Foundation
 import Network
+import UIKit
 
 @MainActor
 final class LocalHTTPServer: ObservableObject {
     @Published private(set) var port: UInt16?
-    @Published private(set) var isRunning = false
+    @Published private(set) var isRunning = false {
+        didSet { updateIdleTimer() }
+    }
     @Published private(set) var isStarting = false
-    @Published private(set) var allowsLAN = false
+    @Published private(set) var allowsLAN = false {
+        didSet { updateIdleTimer() }
+    }
+    /// Bumped every time the app returns to the foreground and the listener
+    /// has been verified (and revived if needed), so open pages that failed
+    /// while the socket was dead can reload themselves.
+    @Published private(set) var recoveryToken = 0
     /// True when the Local Network permission appears to be denied while LAN
     /// sharing is on, so the UI can guide the user to Settings instead of
     /// showing a QR code that silently fails for everyone else.
@@ -16,9 +25,91 @@ final class LocalHTTPServer: ObservableObject {
     private let queue = DispatchQueue(label: "com.engagendy.HTMLServe.http")
     private let lanSharingKey = "allowsLANSharing"
     private let preferredPortKey = "lastBoundServerPort"
+    private var isRecovering = false
+    private var foregroundObserver: NSObjectProtocol?
 
     init() {
         allowsLAN = UserDefaults.standard.bool(forKey: lanSharingKey)
+        // iOS reclaims the listening socket while the app is suspended (screen
+        // locked, app in the background) without telling NWListener, which
+        // keeps reporting `.ready`. Verify the socket on every return to the
+        // foreground instead of trusting the listener's state.
+        foregroundObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.recoverIfNeeded()
+            }
+        }
+    }
+
+    deinit {
+        if let foregroundObserver {
+            NotificationCenter.default.removeObserver(foregroundObserver)
+        }
+    }
+
+    /// Checks that the listener still accepts connections and restarts it if
+    /// the socket died while the app was suspended.
+    func recoverIfNeeded() async {
+        guard !isRecovering else { return }
+        isRecovering = true
+        defer { isRecovering = false }
+
+        if isStarting {
+            _ = await waitUntilReady()
+        }
+        if let port, listener != nil, await Self.acceptsConnections(on: port) {
+            recoveryToken += 1
+            return
+        }
+        do {
+            try await restart()
+        } catch {
+            AppNotifier.shared.error(String(localized: "The local server could not start: \(error.localizedDescription)"))
+        }
+        recoveryToken += 1
+    }
+
+    /// Opens a throwaway loopback connection to find out whether the listening
+    /// socket is really alive.
+    private nonisolated static func acceptsConnections(on port: UInt16) async -> Bool {
+        guard let endpointPort = NWEndpoint.Port(rawValue: port) else { return false }
+        let connection = NWConnection(host: .ipv4(.loopback), port: endpointPort, using: .tcp)
+        let probeQueue = DispatchQueue(label: "com.engagendy.HTMLServe.probe")
+        return await withCheckedContinuation { continuation in
+            // Only ever touched on probeQueue.
+            var finished = false
+            let finish: (Bool) -> Void = { alive in
+                guard !finished else { return }
+                finished = true
+                connection.stateUpdateHandler = nil
+                connection.cancel()
+                continuation.resume(returning: alive)
+            }
+            connection.stateUpdateHandler = { state in
+                switch state {
+                case .ready:
+                    finish(true)
+                case .waiting, .failed, .cancelled:
+                    finish(false)
+                default:
+                    break
+                }
+            }
+            connection.start(queue: probeQueue)
+            probeQueue.asyncAfter(deadline: .now() + 1) {
+                finish(false)
+            }
+        }
+    }
+
+    /// Keeps the screen awake while the classroom is connected: a locked iPad
+    /// suspends the app, which cuts every student off mid-lesson.
+    private func updateIdleTimer() {
+        UIApplication.shared.isIdleTimerDisabled = allowsLAN && isRunning
     }
 
     func start() async throws {
@@ -43,12 +134,19 @@ final class LocalHTTPServer: ObservableObject {
         let remembered = UserDefaults.standard.integer(forKey: preferredPortKey)
         if remembered > 0, remembered <= Int(UInt16.max),
            let preferredPort = NWEndpoint.Port(rawValue: UInt16(remembered)) {
-            do {
-                try startListener(on: preferredPort)
-                if await waitUntilReady() { return }
-                stop()
-            } catch {
-                stop()
+            // A just-cancelled listener can hold the port for a moment, so
+            // give it a couple of tries before giving the port up.
+            for attempt in 0..<3 {
+                if attempt > 0 {
+                    try? await Task.sleep(nanoseconds: 150_000_000)
+                }
+                do {
+                    try startListener(on: preferredPort)
+                    if await waitUntilReady() { return }
+                    stop()
+                } catch {
+                    stop()
+                }
             }
         }
 

@@ -4,8 +4,8 @@ options:
   deploymentTarget:
     iOS: "17.0"
 settings:
-  MARKETING_VERSION: 1.2.0
-  CURRENT_PROJECT_VERSION: 14
+  MARKETING_VERSION: 1.2.1
+  CURRENT_PROJECT_VERSION: 15
   DEVELOPMENT_TEAM: 7JM77223V5
 targets:
   iPadServe:
